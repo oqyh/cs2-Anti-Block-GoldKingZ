@@ -20,7 +20,7 @@ namespace Anti_Block_GoldKingZ;
 public class AntiBlockGoldKingZ : BasePlugin
 {
     public override string ModuleName => "Anti-Block Body/Nades";
-    public override string ModuleVersion => "1.0.0";
+    public override string ModuleVersion => "1.0.1";
     public override string ModuleAuthor => "Gold KingZ";
     public override string ModuleDescription => "https://github.com/oqyh";
 	internal static IStringLocalizer? Stringlocalizer;
