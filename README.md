@@ -31,7 +31,7 @@
 
   //OnStartRound Time In Secs Anti Body Block
   //(0) = Disabled
-  "AntiBodyBlock_OnStartRoundDurationXInSecs": true,
+  "AntiBodyBlock_OnStartRoundDurationXInSecs": 10,
 
 //----------------------------[ ↓ NadeBlock Configs ↓ ]-------------------------------
 
