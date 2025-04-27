@@ -1,0 +1,4 @@
+{
+    "PrintChatToAllPlayers.AntiBlock.Enabled": "{green}Gold KingZ {grey}| {grey}Anti-BodyBlock tagad ir {lime}ieslēgts {grey}uz {lime}{0} sekundēm",
+    "PrintChatToAllPlayers.AntiBlock.Disabled": "{green}Gold KingZ {grey}| {grey}Anti-BodyBlock tagad ir {darkred}izslēgts"
+}
