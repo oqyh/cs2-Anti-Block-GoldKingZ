@@ -9,16 +9,20 @@
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <Configuration>Release</Configuration>
     <DebugType>none</DebugType>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CounterStrikeSharp.API" Version="*" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="Microsoft.Extensions.Localization" Version="*" />
-  </ItemGroup>
+		<PackageReference Include="CounterStrikeSharp.API" Version="*" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+		<PackageReference Include="MySqlConnector" Version="2.3.7" />
+		<PackageReference Include="LiteDB" Version="6.0.0-prerelease.75" />
+	</ItemGroup>
 
   <ItemGroup>
     <None Update="Newtonsoft.Json.dll"><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></None>
+    <None Update="MySqlConnector.dll"><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></None>
+    <None Update="LiteDB.dll"><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></None>
     <None Update="lang\**\*.*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

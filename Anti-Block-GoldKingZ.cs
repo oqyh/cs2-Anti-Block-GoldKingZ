@@ -12,141 +12,318 @@ using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 using CounterStrikeSharp.API.Modules.Entities.Constants;
 using CounterStrikeSharp.API.Modules.Utils;
+using System.Numerics;
+using System.Text;
+using System.Runtime.InteropServices;
+using CounterStrikeSharp.API.Modules.Entities;
+using CounterStrikeSharp.API.Modules.Memory;
 
 namespace Anti_Block_GoldKingZ;
 
-
-[MinimumApiVersion(276)]
-public class AntiBlockGoldKingZ : BasePlugin
+public class MainPlugin : BasePlugin
 {
-    public override string ModuleName => "Anti-Block Body/Nades";
-    public override string ModuleVersion => "1.0.1";
+    public override string ModuleName => "Anti-BlockBody Client Side (Support HeadBoost + Vips Flags)"; 
+    public override string ModuleVersion => "1.0.2";
     public override string ModuleAuthor => "Gold KingZ";
     public override string ModuleDescription => "https://github.com/oqyh";
-	internal static IStringLocalizer? Stringlocalizer;
-	public static AntiBlockGoldKingZ Instance { get; set; } = new();
+	public static MainPlugin Instance { get; set; } = new();
+    public readonly Game_UserMessages Game_UserMessages = new();
     public Globals g_Main = new();
-
     public override void Load(bool hotReload)
     {
 		Instance = this;
         Configs.Load(ModuleDirectory);
-        Stringlocalizer = Localizer;
-        Configs.Shared.CookiesModule = ModuleDirectory;
-        Configs.Shared.StringLocalizer = Localizer;
 
-        RegisterEventHandler<EventRoundStart>(OnRoundStart, HookMode.Post);
-        RegisterEventHandler<EventRoundEnd>(OnEventRoundEnd, HookMode.Post);
-        RegisterEventHandler<EventPlayerDisconnect>(OnPlayerDisconnect);
+        Helper.RemoveRegisterCommandsAndHooks();
+        Helper.DownloadMissingFiles();
+        
+        Helper.RegisterCommandsAndHooks();
+        
+        if (hotReload)
+        {
+            Helper.ClearVariables(true);
 
-		RegisterListener<Listeners.OnEntityCreated>(OnEntityCreated);
-		RegisterListener<Listeners.OnMapEnd>(OnMapEnd);
+            Helper.RemoveRegisterCommandsAndHooks();
+            Helper.ReloadPlayersGlobals();
+            Helper.DownloadMissingFiles();
+
+            Helper.RegisterCommandsAndHooks();
+        }
     }
 
-    public HookResult OnRoundStart(EventRoundStart @event, GameEventInfo info)
+    
+    public void OnMapStart(string Map)
     {
-        if(Configs.GetConfigData().AntiBodyBlock_OnStartRoundDurationXInSecs == 0 || @event == null || Helper.IsWarmup())return HookResult.Continue;
+        Helper.DownloadMissingFiles();
+    }
 
-        if(g_Main.AntiBodyBlockTimer != null)
-        {
-            g_Main.AntiBodyBlockTimer.Kill();
-            g_Main.AntiBodyBlockTimer = null!;
-        }
+    public HookResult OnEventPlayerConnectFull(EventPlayerConnectFull @event, GameEventInfo info)
+    {
+        if (@event == null) return HookResult.Continue;
         
-        g_Main.AntiBodyBlockTimer = AddTimer(1.0f, () => Helper.AntiBodyBlock(true), TimerFlags.REPEAT | TimerFlags.STOP_ON_MAPCHANGE);
-        Helper.AdvancedServerPrintToChatAll(Configs.Shared.StringLocalizer!["PrintChatToAllPlayers.AntiBlock.Enabled", Configs.GetConfigData().AntiBodyBlock_OnStartRoundDurationXInSecs]);
-
-        AddTimer(Configs.GetConfigData().AntiBodyBlock_OnStartRoundDurationXInSecs, () =>
-        {
-            if(g_Main.AntiBodyBlockTimer != null)
-            {
-                Helper.AntiBodyBlock(false);
-                g_Main.AntiBodyBlockTimer.Kill();
-                g_Main.AntiBodyBlockTimer = null!;
-                Helper.AdvancedServerPrintToChatAll(Configs.Shared.StringLocalizer!["PrintChatToAllPlayers.AntiBlock.Disabled"]);
-            }
-        }, TimerFlags.STOP_ON_MAPCHANGE);
+        var player = @event.Userid;
+        if (!player.IsValid(true)) return HookResult.Continue;
+        
+        _ = HandlePlayerConnectionsAsync(player);
         
         return HookResult.Continue;
     }
+
+    public async Task HandlePlayerConnectionsAsync(CCSPlayerController player)
+    {
+        try
+        {
+            if (!player.IsValid(true)) return;
+
+            ulong steamId = player.SteamID;
+            int slot = player.Slot;
+
+            if (g_Main.Player_Data.TryGetValue(slot, out var handle))
+            {
+                handle.Player = player;
+                return;
+            }
+
+            await Server.NextFrameAsync(() => Helper.CheckPlayerInGlobals(player));
+
+            if (Configs.Instance.Cookies_Enable > 0)
+            {
+                var cookieData = Cookies.GetPlayerData(steamId);
+                if (cookieData != null)
+                {
+                    await Server.NextFrameAsync(() => Helper.UpdatePlayerData(player, cookieData));
+                }
+            }
+
+            if (Configs.Instance.MySql_Enable > 0)
+            {
+                var mysqlData = await MySqlDataManager.RetrievePersonDataByIdAsync(steamId);
+                if (mysqlData != null)
+                {
+                    await Server.NextFrameAsync(() => Helper.UpdatePlayerData(player, mysqlData));
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Helper.DebugMessage($"HandlePlayerConnectionsAsync error: {ex.Message}");
+        }
+    }
+
+    public HookResult OnEventRoundStart(EventRoundStart @event, GameEventInfo info)
+    {
+        if (@event == null 
+        || !Configs.Instance.AntiBodyBlock_OnRoundStart
+        || Configs.Instance.AntiBodyBlock_DisableOnWarmUp && Helper.IsWarmup()) return HookResult.Continue;
+
+        Helper.ChangeConvar();
+        Helper.KillAntiBodyBlockTimer_All();
+        Helper.ResetAntiBodyBlock();
+
+        Helper.StartAntiBlock_All(true);
+        
+        g_Main.AntiBodyBlockTimer?.Kill();
+        g_Main.AntiBodyBlockTimer = null!;
+        g_Main.AntiBodyBlockTimer = AddTimer(Configs.Instance.AntiBodyBlock_OnRoundStartDuration, () =>
+        {
+            Helper.StartAntiBlock_All(false);
+            g_Main.AntiBodyBlockTimer?.Kill();
+            g_Main.AntiBodyBlockTimer = null!;
+            Helper.AdvancedServerPrintToChatAll(Localizer["PrintToChatToAllPlayers.AntiBodyBlock.Disabled"], Configs.Instance.AntiBodyBlock_OnRoundStartDuration);
+        }, TimerFlags.STOP_ON_MAPCHANGE);
+
+        Helper.AdvancedServerPrintToChatAll(Localizer["PrintToChatToAllPlayers.AntiBodyBlock.Enabled"], Configs.Instance.AntiBodyBlock_OnRoundStartDuration);
+        return HookResult.Continue;
+    }
+
     public HookResult OnEventRoundEnd(EventRoundEnd @event, GameEventInfo info)
     {
-        if(Configs.GetConfigData().AntiBodyBlock_OnStartRoundDurationXInSecs == 0 || @event == null || Helper.IsWarmup())return HookResult.Continue;
+        if (@event == null) return HookResult.Continue;
 
-        if(g_Main.AntiBodyBlockTimer != null)
-        {
-            g_Main.AntiBodyBlockTimer.Kill();
-            g_Main.AntiBodyBlockTimer = null!;
-        }
+        Helper.ChangeConvar();
+        Helper.KillAntiBodyBlockTimer_All();
+        Helper.ResetAntiBodyBlock();
+        
         return HookResult.Continue;
     }
 
-
-    public void OnEntityCreated(CEntityInstance entity)
+    public HookResult OnEventPlayerSpawn(EventPlayerSpawn @event, GameEventInfo info)
     {
-        if (!Configs.GetConfigData().AntiBlockNades_IfThrowToEnemyTeam && !Configs.GetConfigData().AntiBlockNades_IfThrowToTeamMates)return;
-        if (entity == null || entity.Entity == null || !entity.IsValid || !entity.DesignerName.Contains("_projectile"))return;
-        string[] AntiBlockNades_TheseNadess = Configs.GetConfigData().AntiBlockNades_TheseNades.Split(',');
-        if (AntiBlockNades_TheseNadess.Any(cmd => entity.DesignerName.StartsWith(cmd, StringComparison.OrdinalIgnoreCase)))
-        {
-            Server.NextFrame(() =>
-            {
-                if (entity == null || entity.Entity == null || !entity.IsValid)return;
-                var projectile = new CBaseGrenade(entity.Handle);
-                if (projectile == null || projectile.Entity == null || !projectile.IsValid)return;
-
-                var pawn = projectile.OriginalThrower.Value;
-                if (pawn == null || !pawn.IsValid)return;
-
-                var player = pawn.OriginalController.Value;
-                if (player == null || !player.IsValid)return;
-                if(Configs.GetConfigData().AntiBlockNades_IfThrowToEnemyTeam && Configs.GetConfigData().AntiBlockNades_IfThrowToTeamMates)
-                {
-                    Helper.AntiBlock(projectile);
-                    return;
-                }
-                Helper.AntiBlock(projectile);
-
-                if(!g_Main.NadeTracker.ContainsKey(player))
-                {
-                    g_Main.NadeTracker.Add(player, new Globals.GetNadeAndPlayer(player,projectile, AddTimer(0.01f, () => Helper.NadeTracking(player,projectile), TimerFlags.REPEAT | TimerFlags.STOP_ON_MAPCHANGE)));
-                }
-                if(g_Main.NadeTracker.ContainsKey(player))
-                {
-                    g_Main.NadeTracker[player].Timer?.Kill();
-                    g_Main.NadeTracker[player].Timer = null!;
-                    g_Main.NadeTracker[player] = new Globals.GetNadeAndPlayer(player,projectile, AddTimer(0.01f, () => Helper.NadeTracking(player,projectile), TimerFlags.REPEAT | TimerFlags.STOP_ON_MAPCHANGE));
-                }
-            });
-        }
-    }
-
-
-    public HookResult OnPlayerDisconnect(EventPlayerDisconnect @event, GameEventInfo info)
-    {
-        if(@event == null)return HookResult.Continue;
+        if (@event == null) return HookResult.Continue;
 
         var player = @event.Userid;
-        if (player == null || !player.IsValid) return HookResult.Continue;
+        if (!player.IsValid(true))return HookResult.Continue;
 
-        if (g_Main.NadeTracker.ContainsKey(player))
+        Helper.KillAntiBodyBlockTimer(player);
+
+        if(Configs.Instance.AntiBodyBlock_OnRoundStartDuration == 0)
         {
-            if(g_Main.NadeTracker[player].Timer != null)
+            Server.NextFrame(()=>
             {
-                g_Main.NadeTracker[player].Timer?.Kill();
-                g_Main.NadeTracker[player].Timer = null!;
-            }
-            g_Main.NadeTracker.Remove(player);
+                if (!player.IsValid(true))return;
+                
+                Helper.StartAntiBlock(player);
+            });
         }
         return HookResult.Continue;
     }
-
-    private void OnMapEnd()
+    public HookResult OnEventPlayerDeath(EventPlayerDeath @event, GameEventInfo info)
     {
-        Helper.ClearVariables();
+        if (@event == null) return HookResult.Continue;
+
+        var player = @event.Userid;
+        if (!player.IsValid(true))return HookResult.Continue;
+
+        Helper.KillAntiBodyBlockTimer(player);
+        return HookResult.Continue;
     }
+
+    public HookResult OnPlayerSay(CCSPlayerController? player, CommandInfo info)
+    {
+        return HandlePlayerMessage(player, info.ArgString.Trim('"'));
+    }
+
+    public HookResult OnPlayerSay_Team(CCSPlayerController? player, CommandInfo info)
+    {
+        return HandlePlayerMessage(player, info.ArgString.Trim('"'));
+    }
+
+    public HookResult OnUserMessage_OnSayText2(CounterStrikeSharp.API.Modules.UserMessages.UserMessage um)
+    {
+        var player = Utilities.GetPlayerFromIndex(um.ReadInt("entityindex"));
+        return HandlePlayerMessage(player, Encoding.UTF8.GetString(um.ReadBytes("param2")), um);
+    }
+    
+    private HookResult HandlePlayerMessage(CCSPlayerController? player, string? rawMessage, CounterStrikeSharp.API.Modules.UserMessages.UserMessage? um = null)
+    {
+        if (!player.IsValid()) return HookResult.Continue;
+        if (string.IsNullOrWhiteSpace(rawMessage)) return HookResult.Continue;
+
+        string message = rawMessage.Trim();
+        Game_UserMessages.HookPlayerChat_UserMessages(player, message, um);
+
+        return HookResult.Continue;
+    }
+
+
+    public HookResult OnEventPlayerDisconnect(EventPlayerDisconnect @event, GameEventInfo info)
+    {
+        if (@event.Userid == null) return HookResult.Continue;
+
+        var player = @event.Userid;
+        if (!player.IsValid(true)) return HookResult.Continue;
+
+        Helper.KillAntiBodyBlockTimer(player);
+
+        if(Configs.Instance.AntiBodyBlock.AntiBodyBlock_Mode != 1)
+        {
+            if (g_Main.Player_Data.ContainsKey(player.Slot))
+            {
+                g_Main.Player_Data.Remove(player.Slot);
+            }
+            return HookResult.Continue;
+        }
+
+        if (g_Main.Player_Data.TryGetValue(player.Slot, out var alldata))
+        {
+            bool AntiBlockChanged      = alldata.AntiBodyBlock         < 0;
+
+            if (AntiBlockChanged)
+            {
+                var snapshot = new Globals_Static.PersonData
+                {
+                    PlayerSteamID     = alldata.SteamId,
+                    AntiBodyBlock = alldata.AntiBodyBlock,
+                    DateAndTime       = DateTime.Now
+                };
+
+                bool saveCookie = Configs.Instance.Cookies_Enable == 1;
+                bool saveMySql  = Configs.Instance.MySql_Enable   == 1;
+
+                if (saveCookie || saveMySql)
+                {
+                    _ = HandlePlayerDisconnectAsync(snapshot, saveCookie, saveMySql);
+                }
+            }
+        }
+
+       
+        if(Configs.Instance.Cookies_Enable == 1 && Configs.Instance.MySql_Enable == 1)
+        {
+            if (g_Main.Player_Data.ContainsKey(player.Slot))
+            {
+                g_Main.Player_Data.Remove(player.Slot);
+            }
+        }
+
+        return HookResult.Continue;
+    }
+
+    public async Task HandlePlayerDisconnectAsync(Globals_Static.PersonData data, bool saveCookie, bool saveMySql)
+    {
+        try
+        {
+            if (saveCookie)
+            {
+                await Cookies.SaveAsync(data);
+            }
+
+            if (saveMySql)
+            {
+                await MySqlDataManager.SaveToMySqlAsync(data);
+            }
+        }
+        catch (Exception ex)
+        {
+            Helper.DebugMessage($"HandlePlayerDisconnectAsync Error: {ex.Message}");
+        }
+    }
+
+    public void OnMapEnd()
+    {
+        try
+        {
+            Helper.SavePlayersValues();
+            Helper.ClearVariables(Configs.Instance.AntiBodyBlock.AntiBodyBlock_Mode != 1? true:false);
+            Helper.KillAntiBodyBlockTimer_All();
+        }
+        catch (Exception ex)
+        {
+            Helper.DebugMessage($"OnMapEnd Error: {ex.Message}", true);
+        }
+    }
+
     public override void Unload(bool hotReload)
     {
-        Helper.ClearVariables();
+        try
+        {
+            Helper.RemoveRegisterCommandsAndHooks();
+            Helper.ClearVariables(true);
+        }
+        catch (Exception ex)
+        {
+            Helper.DebugMessage($"Unload Error: {ex.Message}", true);
+        }
+
+        if (hotReload)
+        {
+            try
+            {
+                Helper.RemoveRegisterCommandsAndHooks();
+                Helper.ClearVariables(true);
+            }
+            catch (Exception ex)
+            {
+                Helper.DebugMessage($"Unload hotReload Error: {ex.Message}", true);
+            }
+        }
     }
+    
+
+    /* [ConsoleCommand("css_Test", "testttt")]
+    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
+    public void test(CCSPlayerController? player, CommandInfo commandInfo)
+    {
+        if (!player.IsValid()) return;
+    } */
 }

@@ -1,23 +1,58 @@
 using CounterStrikeSharp.API.Core;
 using System.Diagnostics;
+using CounterStrikeSharp.API.Modules.Entities.Constants;
 
 namespace Anti_Block_GoldKingZ;
 
+public static class Globals_Static
+{
+    public class PersonData
+    {
+        public ulong PlayerSteamID { get; set; }
+        public int AntiBodyBlock { get; set; }
+        public DateTime DateAndTime { get; set; }
+    }
+}
+
+
 public class Globals
 {
-    public class GetNadeAndPlayer
+    public class PlayerDataClass
     {
         public CCSPlayerController Player { get; set; }
-        public CBaseEntity Nade { get; set; }
-        public CounterStrikeSharp.API.Modules.Timers.Timer Timer { get; set; }
+        public ulong SteamId { get; set; }
+        public int AntiBodyBlock { get; set; }
+        public CounterStrikeSharp.API.Modules.Timers.Timer? Timer_NoBlock { get; set; }
+        public int NoBlock_Used { get; set; }
+        public DateTime Cooldown { get; set; }
+        public DateTime EventPlayerChat { get; set; }
+        public DateTime DateAndTime { get; set; }
         
-        public GetNadeAndPlayer(CCSPlayerController player, CBaseEntity nade, CounterStrikeSharp.API.Modules.Timers.Timer timer)
+        public PlayerDataClass(CCSPlayerController Playerr, ulong SteamIdd, int AntiBodyBlockk, CounterStrikeSharp.API.Modules.Timers.Timer? Timer_NoBlockk, int NoBlock_Usedd, DateTime Cooldownn, DateTime EventPlayerChatt, DateTime DateAndTimee)
         {
-            Player = player;
-            Nade = nade;
-            Timer = timer;
+            Player = Playerr;
+            SteamId = SteamIdd;
+            AntiBodyBlock = AntiBodyBlockk;
+            Timer_NoBlock = Timer_NoBlockk;            
+            NoBlock_Used = NoBlock_Usedd;            
+            Cooldown = Cooldownn;            
+            EventPlayerChat = EventPlayerChatt;
+            DateAndTime = DateAndTimee;
         }
     }
-    public Dictionary<CCSPlayerController, GetNadeAndPlayer> NadeTracker = new Dictionary<CCSPlayerController, GetNadeAndPlayer>();
+    public Dictionary<int, PlayerDataClass> Player_Data = new Dictionary<int, PlayerDataClass>();
     public CounterStrikeSharp.API.Modules.Timers.Timer? AntiBodyBlockTimer { get; set; }
+    public bool Downloading_FromGithub = false;
+
+    public void Clear(bool clear_data = false)
+    {
+        AntiBodyBlockTimer?.Kill();
+        AntiBodyBlockTimer = null!;
+        
+        if(clear_data)
+        {
+            Helper.KillAntiBodyBlockTimer_All();
+            Player_Data?.Clear();
+        }
+    }
 }

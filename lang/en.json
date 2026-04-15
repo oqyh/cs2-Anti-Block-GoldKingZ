@@ -1,4 +1,16 @@
 {
-    "PrintChatToAllPlayers.AntiBlock.Enabled": "{green}Gold KingZ {grey}| {grey}Anti-BodyBlock Is Now {lime}Enabled {grey}For {lime}{0} Secs",
-    "PrintChatToAllPlayers.AntiBlock.Disabled": "{green}Gold KingZ {grey}| {grey}Anti-BodyBlock Is Now {darkred}Disabled"
+    "PrintToChatToPlayer.ReloadPlugin.Not.Allowed": "{green}[Anti-BodyBlock] {darkred}You Dont Have Permission",
+    "PrintToChatToPlayer.ReloadPlugin.Successfully": "{green}[Anti-BodyBlock] {grey}Plugin Reloaded {lime}Successfully",
+
+    "PrintToChatToPlayer.AntiBodyBlock.Not.Allowed": "{green}[Anti-BodyBlock] {darkred}You Dont Have Permission",
+    "PrintToChatToPlayer.AntiBodyBlock.AlreadyActive": "{green}[Anti-BodyBlock] {grey}You Already Have Anti Body Block To Pass Through Players",
+    "PrintToChatToPlayer.AntiBodyBlock.Mode1.Enabled": "{green}[Anti-BodyBlock] {grey}Anti Body Block Is {lime}Enabled",
+    "PrintToChatToPlayer.AntiBodyBlock.Mode1.Disabled": "{green}[Anti-BodyBlock] {grey}Anti Body Block Is {darkred}Disabled",
+    "PrintToChatToPlayer.AntiBodyBlock.Mode2.OnCooldown": "{green}[Anti-BodyBlock] {grey}You Are On Cooldown. Please Wait {yellow}{0} Seconds.",
+    "PrintToChatToPlayer.AntiBodyBlock.Mode2.MaxUsesReached": "{green}[Anti-BodyBlock] {darkred}You Have Reached The Maximum Of {yellow}{0} {darkred}Uses",
+    "PrintToChatToPlayer.AntiBodyBlock.Mode2.Enabled": "{green}[Anti-BodyBlock] {grey}Anti Body Block Is {lime}Enabled {purple}{0} {lime}Secs",
+    "PrintToChatToPlayer.AntiBodyBlock.Mode2.Disabled": "{green}[Anti-BodyBlock] {grey}Anti Body Block Is {darkred}Disabled",
+
+    "PrintToChatToAllPlayers.AntiBodyBlock.Enabled": "{green}[Anti-BodyBlock] {grey}Anti Body Block Is {lime}Enabled For {purple}{0} {lime}Secs",
+    "PrintToChatToAllPlayers.AntiBodyBlock.Disabled": "{green}[Anti-BodyBlock] {grey}Anti Body Block Is {darkred}Disabled"
 }
