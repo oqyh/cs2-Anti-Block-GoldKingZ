@@ -1,40 +1,113 @@
 using System.Runtime.InteropServices;
 using CounterStrikeSharp.API;
+using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
 using CounterStrikeSharp.API.Core;
 using Newtonsoft.Json.Linq;
 using Anti_Block_GoldKingZ.Config;
-using CounterStrikeSharp.API.Modules.Memory;
 
 namespace Anti_Block_GoldKingZ;
 
 public class CustomGameData
 {
-    private readonly Dictionary<string, string> _customSignatures = new();
-    private readonly Dictionary<string, string> _customLibraries = new();
-    private readonly Dictionary<string, int>    _customOffsets    = new();
-    private bool _isDataLoaded = false;
-    public MemoryFunctionWithReturn<nint, nint, bool>? ShouldCollide { get; private set; }
+    private static CustomGameData? _instance;
+    public static CustomGameData? Instance => _instance;
 
-    public CustomGameData()
-    {
-        LoadAndInit();
-    }
+    private readonly Dictionary<string, string> _signatures = new();
+    private readonly Dictionary<string, string> _libraries  = new();
+    private readonly Dictionary<string, int>    _offsets    = new();
+    private readonly Dictionary<string, string> _patches    = new();
+    private bool _isLoaded = false;
 
-    private static string? GetModulePath(string library)
+    private static string? GetModulePath(string library) => library.ToLowerInvariant() switch
     {
-        return library.ToLowerInvariant() switch
+        "server"    => null,
+        "vphysics2" => $"{Constants.ModulePrefix}vphysics2{Constants.ModuleSuffix}",
+        _           => null
+    };
+
+    public static void Load()
+    {
+        if (_instance != null) return;
+
+        _instance = new CustomGameData();
+        _instance.LoadFromJson();
+
+        if (!_instance._isLoaded)
         {
-            "server" => null,
-            "vphysics2" => $"{Constants.ModulePrefix}vphysics2{Constants.ModuleSuffix}",
-            _ => null
-        };
+            Helper.DebugMessage("GameData failed to load");
+            return;
+        }
+
+        CustomPatches.Init(_instance);
+        CustomHooks.Init(_instance);
+
+        Helper.DebugMessage("GameData loaded");
     }
 
-    private void LoadAndInit()
+    public static void Unload()
+    {
+        if (_instance == null) return;
+
+        CustomPatches.Cleanup();
+        CustomHooks.Cleanup();
+
+        _instance = null;
+        Helper.DebugMessage("GameData unloaded");
+    }
+
+    public string GetSignature(string key)  => _signatures.TryGetValue(key, out var s) ? s : string.Empty;
+    public int    GetOffset(string key)     => _offsets.TryGetValue(key, out var v) ? v : -1;
+    public string GetPatchBytes(string key) => _patches.TryGetValue(key, out var p) ? p : string.Empty;
+    public string GetLibrary(string key)    => _libraries.GetValueOrDefault(key, "server");
+
+    public T? CreateFunction<T>(string key) where T : class
+    {
+        string sig = GetSignature(key);
+        if (string.IsNullOrEmpty(sig))
+        {
+            Helper.DebugMessage($"{key} signature missing for this platform");
+            return null;
+        }
+
+        var module = GetModulePath(GetLibrary(key));
+
+        try
+        {
+            return module != null
+                ? (T)Activator.CreateInstance(typeof(T), sig, module)!
+                : (T)Activator.CreateInstance(typeof(T), sig)!;
+        }
+        catch (Exception ex)
+        {
+            Helper.DebugMessage($"{key} CreateFunction Error: {ex.Message}");
+            return null;
+        }
+    }
+
+    public MemoryPatch? CreatePatch(string key)
+    {
+        string sig = GetSignature(key);
+        if (string.IsNullOrEmpty(sig))
+        {
+            Helper.DebugMessage($"{key} signature missing for this platform");
+            return null;
+        }
+
+        var module = GetModulePath(GetLibrary(key));
+        var patch = new MemoryPatch(module);
+
+        if (!patch.Init(sig))
+        {
+            Helper.DebugMessage($"{key} signature not found in {GetLibrary(key)}");
+            return null;
+        }
+        return patch;
+    }
+
+    private void LoadFromJson()
     {
         string jsonFilePath = Path.Combine(MainPlugin.Instance.ModuleDirectory, "gamedata/gamedata.json");
-
         if (!File.Exists(jsonFilePath))
         {
             Helper.DebugMessage("gamedata.json Not Found");
@@ -43,80 +116,30 @@ public class CustomGameData
 
         try
         {
-            var jsonData   = File.ReadAllText(jsonFilePath);
-            var jsonObject = JObject.Parse(jsonData);
+            var jsonObject = JObject.Parse(File.ReadAllText(jsonFilePath));
+            string platformKey = RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "linux" : "windows";
 
-            bool   isLinux      = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
-            string platformKey  = isLinux ? "linux" : "windows";
-
-            _customSignatures.Clear();
-            _customLibraries.Clear();
-            _customOffsets.Clear();
+            _signatures.Clear();
+            _libraries.Clear();
+            _offsets.Clear();
+            _patches.Clear();
 
             foreach (var item in jsonObject.Properties())
             {
                 string key  = item.Name;
                 var    data = item.Value;
 
-                if (data["signatures"]?[platformKey] is { } sig)
-                    _customSignatures[key] = sig.ToString();
-
-                if (data["signatures"]?["library"] is { } lib)
-                    _customLibraries[key] = lib.ToString();
-                else
-                    _customLibraries[key] = "server";
-
-                if (data["offsets"]?[platformKey] is { } off)
-                    _customOffsets[key] = off.Value<int>();
+                if (data["signatures"]?[platformKey] is { } sig) _signatures[key] = sig.ToString();
+                _libraries[key] = data["signatures"]?["library"]?.ToString() ?? "server";
+                if (data["offsets"]?[platformKey]  is { } off)   _offsets[key]   = off.Value<int>();
+                if (data["patches"]?[platformKey]  is { } pat)   _patches[key]   = pat.ToString();
             }
 
-            _isDataLoaded = true;
-            InitializeFunctions();
+            _isLoaded = true;
         }
         catch (Exception ex)
         {
-            Helper.DebugMessage($"LoadAndInit Error: {ex.Message}");
+            Helper.DebugMessage($"LoadFromJson Error: {ex.Message}");
         }
     }
-
-    private void InitializeFunctions()
-    {
-        if (!_isDataLoaded) return;
-
-        try
-        {
-            if (Configs.Instance.AntiBodyBlock.AntiBodyBlock_Mode != 0)
-            {
-                ShouldCollide = TryCreate<MemoryFunctionWithReturn<nint, nint, bool>>("ShouldCollide");
-            }
-
-        }
-        catch (Exception ex)
-        {
-            Helper.DebugMessage($"InitializeFunctions Error: {ex.Message}");
-        }
-    }
-
-    private T? TryCreate<T>(string key) where T : class
-    {
-        if (!_customSignatures.TryGetValue(key, out var sig)) return null;
-
-        var module = GetModulePath(_customLibraries.GetValueOrDefault(key, "server"));
-
-        try
-        {
-            var result = module != null
-                ? (T)Activator.CreateInstance(typeof(T), sig, module)!
-                : (T)Activator.CreateInstance(typeof(T), sig)!;
-            return result;
-        }
-        catch (Exception ex)
-        {
-            Helper.DebugMessage($"{key} TryCreate Error: {ex.Message}");
-            return null;
-        }
-    }
-
-    public string GetSignature(string key) => _customSignatures.TryGetValue(key, out var sig) ? sig : "Signature not found";
-    public int GetOffset(string key) => _customOffsets.TryGetValue(key, out int val) ? val : -1;
 }

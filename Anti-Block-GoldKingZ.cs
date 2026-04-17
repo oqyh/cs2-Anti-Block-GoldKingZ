@@ -17,13 +17,14 @@ using System.Text;
 using System.Runtime.InteropServices;
 using CounterStrikeSharp.API.Modules.Entities;
 using CounterStrikeSharp.API.Modules.Memory;
+using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
 
 namespace Anti_Block_GoldKingZ;
 
 public class MainPlugin : BasePlugin
 {
-    public override string ModuleName => "Anti-BlockBody Client Side (Support HeadBoost + Vips Flags)"; 
-    public override string ModuleVersion => "1.0.2";
+    public override string ModuleName => "Anti-BodyBlock Client Side (Support HeadBoost + Vips Flags) + Anti-NadeBlock (Support Specific Nades/Team Bounce)"; 
+    public override string ModuleVersion => "1.0.3";
     public override string ModuleAuthor => "Gold KingZ";
     public override string ModuleDescription => "https://github.com/oqyh";
 	public static MainPlugin Instance { get; set; } = new();
@@ -38,7 +39,7 @@ public class MainPlugin : BasePlugin
         Helper.DownloadMissingFiles();
         
         Helper.RegisterCommandsAndHooks();
-        
+
         if (hotReload)
         {
             Helper.ClearVariables(true);
@@ -50,8 +51,6 @@ public class MainPlugin : BasePlugin
             Helper.RegisterCommandsAndHooks();
         }
     }
-
-    
     public void OnMapStart(string Map)
     {
         Helper.DownloadMissingFiles();
@@ -204,8 +203,7 @@ public class MainPlugin : BasePlugin
 
         return HookResult.Continue;
     }
-
-
+    
     public HookResult OnEventPlayerDisconnect(EventPlayerDisconnect @event, GameEventInfo info)
     {
         if (@event.Userid == null) return HookResult.Continue;
@@ -214,15 +212,6 @@ public class MainPlugin : BasePlugin
         if (!player.IsValid(true)) return HookResult.Continue;
 
         Helper.KillAntiBodyBlockTimer(player);
-
-        if(Configs.Instance.AntiBodyBlock.AntiBodyBlock_Mode != 1)
-        {
-            if (g_Main.Player_Data.ContainsKey(player.Slot))
-            {
-                g_Main.Player_Data.Remove(player.Slot);
-            }
-            return HookResult.Continue;
-        }
 
         if (g_Main.Player_Data.TryGetValue(player.Slot, out var alldata))
         {
@@ -246,9 +235,8 @@ public class MainPlugin : BasePlugin
                 }
             }
         }
-
-       
-        if(Configs.Instance.Cookies_Enable == 1 && Configs.Instance.MySql_Enable == 1)
+        
+        if (!(Configs.Instance.Cookies_Enable == 2 || Configs.Instance.MySql_Enable == 2))
         {
             if (g_Main.Player_Data.ContainsKey(player.Slot))
             {
@@ -284,8 +272,7 @@ public class MainPlugin : BasePlugin
         try
         {
             Helper.SavePlayersValues();
-            Helper.ClearVariables(Configs.Instance.AntiBodyBlock.AntiBodyBlock_Mode != 1? true:false);
-            Helper.KillAntiBodyBlockTimer_All();
+            Helper.ClearVariables();
         }
         catch (Exception ex)
         {

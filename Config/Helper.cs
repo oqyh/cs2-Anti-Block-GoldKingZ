@@ -23,6 +23,56 @@ namespace Anti_Block_GoldKingZ;
 
 public class Helper
 {
+    private static readonly Dictionary<string, string> Nades_Maps = new(StringComparer.OrdinalIgnoreCase)
+    {
+        { "hegrenade",    "hegrenade"    },
+        { "he",           "hegrenade"    },
+        { "flashbang",    "flashbang"    },
+        { "flash",        "flashbang"    },
+        { "smokegrenade", "smokegrenade" },
+        { "smoke",        "smokegrenade" },
+        { "decoy",        "decoy"        },
+        { "molotov",      "molotov"      },
+        { "incendiary",   "molotov"   },
+        { "inc",          "molotov"   }
+    };
+
+    public static Dictionary<string, bool> NadesParse(List<string> entries)
+    {
+        var result = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+        if (entries == null) return result;
+
+        foreach (var raw in entries)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) continue;
+
+            var parts = raw.Split(':', 2, StringSplitOptions.TrimEntries);
+            if (parts.Length != 2) continue;
+
+            string nameRaw = parts[0].Trim().ToLowerInvariant();
+            string action  = parts[1].Trim().ToLowerInvariant();
+
+            if (!Nades_Maps.TryGetValue(nameRaw, out var canonical)) continue;
+
+            bool bounce = action switch
+            {
+                "b" or "block" or "bounce"                   => true,
+                "p" or "pass"  or "passthrough" or "through" => false,
+                _ => false
+            };
+
+            result[canonical] = bounce;
+        }
+        return result;
+    }
+
+    public static string? DesignerToCanonical(string? designerName)
+    {
+        if (string.IsNullOrEmpty(designerName)) return null;
+        string stripped = designerName.Replace("_projectile", "").ToLowerInvariant();
+        return Nades_Maps.TryGetValue(stripped, out var canonical) ? canonical : null;
+    }
+    
     public static void RegisterCssCommands(string[]? commands, string description, CommandInfo.CommandCallback callback)
     {
         if (commands == null || commands.Length == 0) return;
@@ -369,6 +419,9 @@ public class Helper
                 DateTime.MinValue
             );
             g_Main.Player_Data.TryAdd(player.Slot, initialData);
+        }else
+        {
+            g_Main.Player_Data[player.Slot].Player = player;
         }
     }
 
@@ -417,6 +470,8 @@ public class Helper
 
         g_Main.Player_Data.Clear();
 
+        if (playersToSave?.Count is null or 0 && !cleanCookie && !cleanMySql) return;
+        
         _ = Task.Run(async () =>
         {
             try
@@ -545,6 +600,17 @@ public class Helper
         }
     }
 
+    public static void RebuildNadeBounceMaps()
+    {
+        if(Configs.Instance.AntiNadeBlock_Enable == 0)return;
+        
+        MainPlugin.Instance.g_Main.NadeBounce_Teammates?.Clear();
+        MainPlugin.Instance.g_Main.NadeBounce_Enemies?.Clear();
+
+        MainPlugin.Instance.g_Main.NadeBounce_Teammates = NadesParse(Configs.Instance.AntiNadeBlock_To_Teammates);
+        MainPlugin.Instance.g_Main.NadeBounce_Enemies   = NadesParse(Configs.Instance.AntiNadeBlock_To_Enemies);
+    }
+
     public static void DownloadMissingFiles()
     {
         if(MainPlugin.Instance.g_Main.Downloading_FromGithub)return;
@@ -568,7 +634,7 @@ public class Helper
         try
         {
             await Start_DownloadMissingFiles();
-            await Server.NextFrameAsync(CustomHooks.StartHook);
+            await Server.NextFrameAsync(CustomGameData.Load);
         }
         catch (Exception ex)
         {
@@ -668,12 +734,36 @@ public class Helper
         MainPlugin.Instance.HookUserMessage(118, MainPlugin.Instance.OnUserMessage_OnSayText2, HookMode.Pre);
 
         RegisterCssCommands(Configs.Instance.Reload_AntiBlock.Reload_AntiBlock_CommandsInGame.ConvertCommands(), "Commands To Reload Anti Block Plugin", MainPlugin.Instance.Game_UserMessages.CommandsAction_ReloadPlugin);
-
         if(Configs.Instance.AntiBodyBlock.AntiBodyBlock_Mode != 0)
         {
             RegisterCssCommands(Configs.Instance.AntiBodyBlock.AntiBodyBlock_CommandsInGame.ConvertCommands(), "Commands To Anti Block Client Side", MainPlugin.Instance.Game_UserMessages.CommandsAction_AntiBodyBlock);
         }
 
+        RebuildNadeBounceMaps();
+        LoadData();
+    }
+
+    public static void LoadData()
+    {
+        Cookies.InitializeDatabase();
+        
+        if (Configs.Instance.MySql_Enable > 0)
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    if (Configs.Instance.MySql_Enable > 0)
+                    {
+                        await MySqlDataManager.CreateTableIfNotExistsAsync();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    DebugMessage($"LoadData Error: {ex.Message}");
+                }
+            });
+        }
     }
 
     public static void RemoveRegisterCommandsAndHooks()
@@ -696,8 +786,20 @@ public class Helper
         RemoveCssCommands(Configs.Instance.Reload_AntiBlock.Reload_AntiBlock_CommandsInGame.ConvertCommands(), MainPlugin.Instance.Game_UserMessages.CommandsAction_ReloadPlugin);
         RemoveCssCommands(Configs.Instance.AntiBodyBlock.AntiBodyBlock_CommandsInGame.ConvertCommands(), MainPlugin.Instance.Game_UserMessages.CommandsAction_AntiBodyBlock);
 
-        CustomHooks.UnHook();
+        CustomGameData.Unload();
+        UnLoadData();
+    }
+
+    public static void UnLoadData()
+    {
+        try
+        {
+            Cookies.Dispose();
+        }
+        catch (Exception ex)
+        {
+            DebugMessage($"UnLoadData Error: {ex.Message}");
+        }
         
     }
-    
 }

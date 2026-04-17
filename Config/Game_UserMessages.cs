@@ -20,27 +20,18 @@ public class Game_UserMessages
     {
         if (!player.IsValid()) return HookResult.Continue;
 
-        var g_Main = MainPlugin.Instance.g_Main;
         Helper.CheckPlayerInGlobals(player);
-
-        if (!g_Main.Player_Data.TryGetValue(player.Slot, out var playerData)) return HookResult.Continue;
-
-        bool onetime = (DateTime.Now - playerData.EventPlayerChat).TotalSeconds > 0.4;
-        if (onetime)
-        {
-            playerData.EventPlayerChat = DateTime.Now;
-        }
 
         if (Configs.Instance.Reload_AntiBlock.Reload_AntiBlock_CommandsInGame.ConvertCommands(true)?.Any(c => message.Equals(c.Trim(), StringComparison.OrdinalIgnoreCase)) == true)
         {
-            Handle_ReloadPlugin(player, onetime, null!, um!);
+            Handle_ReloadPlugin(player, null!, um!);
         }
 
-        if(Configs.Instance.AntiBodyBlock.AntiBodyBlock_Mode != 0)
+        if (Configs.Instance.AntiBodyBlock.AntiBodyBlock_Mode != 0)
         {
             if (Configs.Instance.AntiBodyBlock.AntiBodyBlock_CommandsInGame.ConvertCommands(true)?.Any(c => message.Equals(c.Trim(), StringComparison.OrdinalIgnoreCase)) == true)
             {
-                Handle_AntiBodyBlock(player, onetime, playerData, null!, um!);
+                Handle_AntiBodyBlock(player, null!, um!);
             }
         }
 
@@ -52,32 +43,18 @@ public class Game_UserMessages
 
     public void CommandsAction_ReloadPlugin(CCSPlayerController? player, CommandInfo info)
     {
-        if (!player.IsValid()
-        || !MainPlugin.Instance.g_Main.Player_Data.TryGetValue(player.Slot, out var playerData)) return;
-        
-        bool onetime = (DateTime.Now - playerData.EventPlayerChat).TotalSeconds > 0.4;
-        if (onetime)
-        {
-            playerData.EventPlayerChat = DateTime.Now;
-        }
-        
-        Handle_ReloadPlugin(player, onetime, info, null!);
-        
+        if (!player.IsValid()) return;
+
+        Helper.CheckPlayerInGlobals(player);
+        Handle_ReloadPlugin(player, info, null!);
     }
 
     public void CommandsAction_AntiBodyBlock(CCSPlayerController? player, CommandInfo info)
     {
-        if (!player.IsValid()
-        || !MainPlugin.Instance.g_Main.Player_Data.TryGetValue(player.Slot, out var playerData)) return;
-        
-        bool onetime = (DateTime.Now - playerData.EventPlayerChat).TotalSeconds > 0.4;
-        if (onetime)
-        {
-            playerData.EventPlayerChat = DateTime.Now;
-        }
-        
-        Handle_AntiBodyBlock(player, onetime, playerData, info, null!);
-        
+        if (!player.IsValid()) return;
+
+        Helper.CheckPlayerInGlobals(player);
+        Handle_AntiBodyBlock(player, info, null!);
     }
 
     #endregion Commands Hook
@@ -87,8 +64,16 @@ public class Game_UserMessages
 
     #region Handles
 
-    public static void Handle_ReloadPlugin(CCSPlayerController player, bool onetime, CommandInfo commandInfo = null!, UserMessage um = null!)
+    public static void Handle_ReloadPlugin(CCSPlayerController player, CommandInfo commandInfo = null!, UserMessage um = null!)
     {
+        if (!MainPlugin.Instance.g_Main.Player_Data.TryGetValue(player.Slot, out var playerData)) return;
+
+        bool onetime = (DateTime.Now - playerData.EventPlayerChat).TotalSeconds > 0.4;
+        if (onetime)
+        {
+            playerData.EventPlayerChat = DateTime.Now;
+        }
+
         var cfg = Configs.Instance.Reload_AntiBlock;
 
         if (cfg.Reload_AntiBlock_Flags.HasValidPermissionData() && !Helper.IsPlayerInGroupPermission(player, cfg.Reload_AntiBlock_Flags))
@@ -102,14 +87,17 @@ public class Game_UserMessages
         {
             if (onetime)
             {
-                Helper.ClearVariables(true);
-                Helper.RemoveRegisterCommandsAndHooks();
+                Server.NextFrame(() =>
+                {
+                    Helper.ClearVariables(true);
+                    Helper.RemoveRegisterCommandsAndHooks();
 
-                Configs.Load(MainPlugin.Instance.ModuleDirectory);
-                Helper.ReloadPlayersGlobals();
-                Helper.DownloadMissingFiles();
+                    Configs.Load(MainPlugin.Instance.ModuleDirectory);
+                    Helper.ReloadPlayersGlobals();
+                    Helper.DownloadMissingFiles();
 
-                Helper.RegisterCommandsAndHooks();
+                    Helper.RegisterCommandsAndHooks();
+                });
 
                 Helper.AdvancedPlayerPrintToChat(player, commandInfo, MainPlugin.Instance.Localizer["PrintToChatToPlayer.ReloadPlugin.Successfully"]);
             }
@@ -120,10 +108,19 @@ public class Game_UserMessages
         Helper.MuteCommands(um, cfg.Reload_AntiBlock_Hide, true);
     }
 
-    
-    public static void Handle_AntiBodyBlock(CCSPlayerController player, bool onetime, Globals.PlayerDataClass playerData, CommandInfo commandInfo = null!, UserMessage um = null!)
+
+    public static void Handle_AntiBodyBlock(CCSPlayerController player, CommandInfo commandInfo = null!, UserMessage um = null!)
     {
+        if (!MainPlugin.Instance.g_Main.Player_Data.TryGetValue(player.Slot, out var playerData)) return;
+
+        bool onetime = (DateTime.Now - playerData.EventPlayerChat).TotalSeconds > 0.4;
+        if (onetime)
+        {
+            playerData.EventPlayerChat = DateTime.Now;
+        }
+
         var cfg = Configs.Instance.AntiBodyBlock;
+
         if (cfg.AntiBodyBlock_Flags.HasValidPermissionData() && !Helper.IsPlayerInGroupPermission(player, cfg.AntiBodyBlock_Flags))
         {
             if (onetime)
@@ -143,7 +140,7 @@ public class Game_UserMessages
                 return;
             }
 
-            if(cfg.AntiBodyBlock_Mode == 1)
+            if (cfg.AntiBodyBlock_Mode == 1)
             {
                 if (onetime)
                 {
@@ -158,7 +155,8 @@ public class Game_UserMessages
                     }
                 }
                 Helper.MuteCommands(um, cfg.AntiBodyBlock_Hide);
-            }else if(cfg.AntiBodyBlock_Mode == 2)
+            }
+            else if (cfg.AntiBodyBlock_Mode == 2)
             {
                 if (cfg.AntiBodyBlock_Mode_2_Cooldown > 0)
                 {
@@ -189,8 +187,8 @@ public class Game_UserMessages
                         return;
                     }
                 }
-                
-                if(onetime)
+
+                if (onetime)
                 {
                     playerData.Timer_NoBlock?.Kill();
                     playerData.Timer_NoBlock = null;
@@ -198,11 +196,11 @@ public class Game_UserMessages
                     playerData.Cooldown = DateTime.Now;
                     playerData.Timer_NoBlock = MainPlugin.Instance.AddTimer(Configs.Instance.AntiBodyBlock.AntiBodyBlock_Mode_2_Duration, () =>
                     {
-                        if (!player.IsValid() || !MainPlugin.Instance.g_Main.Player_Data.TryGetValue(player.Slot, out var playerData2))return;
+                        if (!player.IsValid() || !MainPlugin.Instance.g_Main.Player_Data.TryGetValue(player.Slot, out var playerData2)) return;
 
                         playerData2.Timer_NoBlock?.Kill();
                         playerData2.Timer_NoBlock = null;
-                        if(player.IsAlive())
+                        if (player.IsAlive())
                         {
                             Helper.AdvancedPlayerPrintToChat(player, commandInfo, MainPlugin.Instance.Localizer["PrintToChatToPlayer.AntiBodyBlock.Mode2.Disabled"], "");
                         }

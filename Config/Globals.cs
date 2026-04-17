@@ -1,6 +1,7 @@
 using CounterStrikeSharp.API.Core;
 using System.Diagnostics;
 using CounterStrikeSharp.API.Modules.Entities.Constants;
+using Anti_Block_GoldKingZ.Config;
 
 namespace Anti_Block_GoldKingZ;
 
@@ -43,6 +44,8 @@ public class Globals
     public Dictionary<int, PlayerDataClass> Player_Data = new Dictionary<int, PlayerDataClass>();
     public CounterStrikeSharp.API.Modules.Timers.Timer? AntiBodyBlockTimer { get; set; }
     public bool Downloading_FromGithub = false;
+    public Dictionary<string, bool> NadeBounce_Teammates = new(StringComparer.OrdinalIgnoreCase);
+    public Dictionary<string, bool> NadeBounce_Enemies  = new(StringComparer.OrdinalIgnoreCase);
 
     public void Clear(bool clear_data = false)
     {

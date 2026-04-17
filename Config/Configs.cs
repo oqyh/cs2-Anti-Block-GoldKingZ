@@ -197,6 +197,45 @@ namespace Anti_Block_GoldKingZ.Config
         [Comment("Reload Anti-BodyBlock Plugin")]
         public Reload_AntiBlock Reload_AntiBlock { get; set; } = new();
 
+        [BreakLine("----------------------------[ ↓ Anti-NadeBlock Config ↓ ]----------------------------{nextline}")]
+
+        [Comment("Use Anti-NadeBlock Filter")]
+        [Comment("0 = Disabled (Default CS2 Behavior: Pass Teammates, Bounce Enemies)")]
+        [Comment("1 = All Nades Bounce On Teammates And Pass On Enemies")]
+        [Comment("2 = All Nades Pass On Teammates And Pass On Enemies")]
+        [Comment("3 = All Nades Bounce On Teammates And Bounce On Enemies")]
+        [Comment("4 = Use Filter AntiNadeBlock_To_Teammates And AntiNadeBlock_To_Enemies")]
+        [Range(0, 4, 0,
+        "AntiNadeBlock_Enable: Is Invalid, Setting To Default Value (0) Please Choose From 0 To 4.\n" +
+        "0 = Disabled (Default CS2 Behavior: Pass Teammates, Bounce Enemies)\n" +
+        "1 = All Nades Bounce On Teammates And Pass On Enemies\n" +
+        "2 = All Nades Pass On Teammates And Pass On Enemies\n" +
+        "3 = All Nades Bounce On Teammates And Bounce On Enemies\n" +
+        "4 = Use Filter AntiNadeBlock_To_Teammates And AntiNadeBlock_To_Enemies")]
+        public int AntiNadeBlock_Enable { get; set; } = 0;
+
+        [Comment("If [AntiNadeBlock_Enable = 4], How Do You Want Nades Behaves When Throw To Teammate")]
+        [Comment("<Nade_Name>:<Pass Or Block>  Example molotov:p Means Molotov Pass When Throw To Teammates")]
+        [Comment("Nades Names : [hegrenade] [flashbang] [smokegrenade] [decoy] [molotov] [incendiary]")]
+        public List<string> AntiNadeBlock_To_Teammates { get; set; } = new List<string>
+        {
+            "hegrenade:p",
+            "flashbang:b",
+            "smokegrenade:b",
+            "decoy:p",
+            "molotov:b",
+            "incendiary:b"
+        };
+
+        [Comment("If [AntiNadeBlock_Enable = 4], How Do You Want Nades Behaves When Throw To Enemy")]
+        [Comment("<Nade_Name>:<Pass Or Block>  Example molotov:b Means Molotov Block/Bounce When Throw To Enemy")]
+        [Comment("Nades Names : [hegrenade] [flashbang] [smokegrenade] [decoy] [molotov] [incendiary]")]
+        public List<string> AntiNadeBlock_To_Enemies { get; set; } = new List<string>
+        {
+            "hegrenade:p",
+            "flashbang:b"
+        };
+        
         [BreakLine("----------------------------[ ↓ Anti-BodyBlock Config ↓ ]----------------------------{nextline}")]
         
         [Comment("Disable Anti-BodyBlock On WarmUp?")]
