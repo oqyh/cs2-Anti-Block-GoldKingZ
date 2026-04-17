@@ -2,11 +2,13 @@
 
 <a href="https://discord.com/invite/U7AuQhu"><img src="https://discord.com/api/guilds/651838917687115806/widget.png?style=banner2"></a>
 
-# [CS2] Anti-Block-GoldKingZ (1.0.2)
+# [CS2] Anti-Block-GoldKingZ (1.0.3)
 
 Anti-BlockBody Client Side (Support HeadBoost + Vips Flags)
 
 ![antibodyblock](https://github.com/user-attachments/assets/85217774-b475-4b9f-a2b6-465dfc0abbeb)
+
+<img width="600" height="340" alt="antinadeblock" src="https://github.com/user-attachments/assets/4890a28f-f554-4b94-8ad8-7a5f38ed1013" />
 
 
 ---
@@ -50,6 +52,16 @@ Anti-BlockBody Client Side (Support HeadBoost + Vips Flags)
 | `Reload_AntiBlock_CommandsInGame` | Commands to reload plugin | `Console_Commands: css_reloadantiblock, css_reloadab`<br>`Chat_Commands:` | - |
 | `Reload_AntiBlock_Flags` | Restricted flags for reload command | `SteamIDs: 76561198206086993, STEAM_0:1:507335558`<br>`Flags: @css/root, @css/admin`<br>`Groups: #css/root, #css/admin` | `Reload_AntiBlock_CommandsInGame` |
 | `Reload_AntiBlock_Hide` | Hide chat after reload command | `0`-No<br>`1`-Only after success<br>`2`-Always hide | `Reload_AntiBlock_CommandsInGame` |
+</details>
+
+<details>
+<summary><b>Anti-NadeBlock Config</b> (Click to expand 🔽)</summary>
+
+| Property | Description | Values | Required |
+|----------|-------------|--------|----------|
+| `AntiNadeBlock_Enable` | Use Anti-NadeBlock filter | `0`-Disabled (Default CS2: pass teammates, bounce enemies)<br>`1`-All nades bounce teammates, pass enemies<br>`2`-All nades pass teammates and enemies<br>`3`-All nades bounce teammates and enemies<br>`4`-Use filter `AntiNadeBlock_To_Teammates` & `AntiNadeBlock_To_Enemies` | - |
+| `AntiNadeBlock_To_Teammates` | Per-nade behavior when thrown at a teammate | Array of `<nade_name>:p` (pass) or `<nade_name>:b` (block/bounce)<br>Nade names: `hegrenade` `flashbang` `smokegrenade` `decoy` `molotov` `incendiary` | `AntiNadeBlock_Enable=4` |
+| `AntiNadeBlock_To_Enemies` | Per-nade behavior when thrown at an enemy | Array of `<nade_name>:p` (pass) or `<nade_name>:b` (block/bounce)<br>Nade names: `hegrenade` `flashbang` `smokegrenade` `decoy` `molotov` `incendiary` | `AntiNadeBlock_Enable=4` |
 </details>
 
 <details>
@@ -114,11 +126,19 @@ Anti-BlockBody Client Side (Support HeadBoost + Vips Flags)
 | `EnableDebug` | Enable debug plugin in server console | `true`/`false` | - |
 </details>
 
-
 ## 📜 Changelog
 
 <details>
 <summary><b>📋 View Version History</b> (Click to expand 🔽)</summary>
+
+### [1.0.3]
+- Fix Cookies_Enable
+- Fix MySql_Enable
+- Fix Reload Plugin Overlap
+- Rework On Custom GameData
+- Added AntiNadeBlock_Enable 4 Modes
+- Added AntiNadeBlock_To_Teammates
+- Added AntiNadeBlock_To_Enemies  
 
 ### [1.0.2]
 - Remove AntiBlockNades_IfThrowToTeamMates
