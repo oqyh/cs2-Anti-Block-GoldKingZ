@@ -37,7 +37,7 @@ public static class CustomHooks
             }
             if (CBaseCSGrenadeProjectile_OnThrow != null)
             {
-                CBaseCSGrenadeProjectile_OnThrow.Hook(OnGrenadeBouncePre,  HookMode.Pre);
+                CBaseCSGrenadeProjectile_OnThrow.Hook(OnCBaseCSGrenadeProjectile_OnThrow,  HookMode.Pre);
             }
 
             _isHooked = true;
@@ -62,7 +62,7 @@ public static class CustomHooks
 
             if (CBaseCSGrenadeProjectile_OnThrow != null)
             {
-                CBaseCSGrenadeProjectile_OnThrow.Unhook(OnGrenadeBouncePre,  HookMode.Pre);
+                CBaseCSGrenadeProjectile_OnThrow.Unhook(OnCBaseCSGrenadeProjectile_OnThrow,  HookMode.Pre);
             }
         }
         catch (Exception ex)
@@ -143,7 +143,7 @@ public static class CustomHooks
         catch { return HookResult.Continue; }
     }
 
-    private static HookResult OnGrenadeBouncePre(DynamicHook hook)
+    private static HookResult OnCBaseCSGrenadeProjectile_OnThrow(DynamicHook hook)
     {
         if (Configs.Instance.AntiNadeBlock_Enable == 0) return HookResult.Continue;
         
