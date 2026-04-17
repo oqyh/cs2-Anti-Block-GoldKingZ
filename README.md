@@ -4,7 +4,7 @@
 
 # [CS2] Anti-Block-GoldKingZ (1.0.3)
 
-Anti-BlockBody Client Side (Support HeadBoost + Vips Flags)
+Anti-BodyBlock Client Side (Support HeadBoost + Vips Flags) + Anti-NadeBlock (Support Specific Nades/Team Bounce)
 
 ![antibodyblock](https://github.com/user-attachments/assets/85217774-b475-4b9f-a2b6-465dfc0abbeb)
 
