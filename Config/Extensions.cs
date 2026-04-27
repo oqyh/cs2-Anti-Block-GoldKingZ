@@ -14,6 +14,7 @@ using System.Security.Cryptography;
 using CounterStrikeSharp.API.Modules.Cvars;
 using System.Runtime.InteropServices;
 using System.Numerics;
+using Anti_Block_GoldKingZ.Config;
 
 namespace Anti_Block_GoldKingZ;
 
@@ -75,20 +76,16 @@ public static class Extension
         collision.CollisionGroup = (byte)group;
         collision.CollisionAttribute.CollisionGroup = (byte)group;
         Utilities.SetStateChanged(entity, "CCollisionProperty", "m_collisionAttribute");
-
-        entity.CollisionRulesChanged();
+        
+        if(Configs.Instance.SetStateChanged == 1)
+        {
+            entity.CollisionRulesChanged();
+        }
     }
     
-    public static int ToggleOnOff(this int value)
+    public static bool ToggleOnOff(this bool value)
     {
-        return value switch
-        {
-            1 => -2,
-            2 => -1,
-            -1 => -2,
-            -2 => -1,
-            _ => value
-        };
+        return !value;
     }
 
     public static bool HasValidPermissionData(this string? groups)

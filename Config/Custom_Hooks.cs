@@ -101,9 +101,9 @@ public static class CustomHooks
             if (moverPawn == null || !moverPawn.IsValid) return HookResult.Continue;
 
             var playerM = moverPawn.Controller.Value?.As<CCSPlayerController>();
-            if (playerM == null || !playerM.IsValid || !MainPlugin.Instance.g_Main.Player_Data.TryGetValue(playerM.Slot, out var data)) return HookResult.Continue;
+            if (playerM == null || !playerM.IsValid || MainPlugin.Instance._prefs == null || !MainPlugin.Instance._prefs.TryGetValue(playerM.Slot, out var _prefs)) return HookResult.Continue;
 
-            if (Configs.Instance.AntiBodyBlock.AntiBodyBlock_Mode == 1 && data.AntiBodyBlock is 2 or -2 || Configs.Instance.AntiBodyBlock.AntiBodyBlock_Mode == 2 && data.Timer_NoBlock == null)
+            if (Configs.Instance.AntiBodyBlock.AntiBodyBlock_Mode == 1 && !_prefs.AntiBodyBlock_Toggle || Configs.Instance.AntiBodyBlock.AntiBodyBlock_Mode == 2 && MainPlugin.Instance.g_Main.Player_Data.TryGetValue(playerM.Slot, out var playerData) && playerData.Timer_NoBlock == null)
             {
                 if (Helper.ArePlayersOverlapping(playerM, playerC))
                 {

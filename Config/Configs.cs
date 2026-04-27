@@ -273,7 +273,7 @@ namespace Anti_Block_GoldKingZ.Config
         [Comment("Required [Cookies_Enable = 1/2]")]
         [Comment("Auto Delete Inactive Players More Than X (Days) Old")]
         [Comment("0 = Dont Auto Delete")]
-        public int Cookies_AutoRemovePlayerOlderThanXDays { get; set; } = 7;
+        public int Cookies_AutoRemoveInactivePlayersOlderThanDays { get; set; } = 7;
 
         [BreakLine("----------------------------[ ↓ MySql Config ↓ ]----------------------------{nextline}")]
 
@@ -305,7 +305,7 @@ namespace Anti_Block_GoldKingZ.Config
 
         [Comment("Auto Delete Inactive Players More Than X (Days) Old")]
         [Comment("0 = Dont Auto Delete")]
-        public int MySql_AutoRemovePlayerOlderThanXDays { get; set; } = 7;
+        public int MySql_AutoRemoveInactivePlayersOlderThanDays { get; set; } = 7;
 
         [BreakLine("----------------------------[ ↓ Utilities  ↓ ]----------------------------{nextline}")]
 
@@ -313,6 +313,15 @@ namespace Anti_Block_GoldKingZ.Config
         [Comment("true = Yes")]
         [Comment("false = No")]
         public bool AutoUpdateSignatures { get; set; } = true;
+
+        [Comment("After SetStateChanged What Method We Use")]
+        [Comment("0 = No (Just Use Utilities.SetStateChanged) (Recommended)")]
+        [Comment("1 = By CollisionRulesChanged")]
+        [Range(0, 1, 0,
+        "SetStateChanged: is invalid, setting to default value (0) Please Choose From 0 To 1.\n" +
+        "0 = No\n" +
+        "1 = By CollisionRulesChanged")]
+        public int SetStateChanged { get; set; } = 0;
 
         [Comment("Enable Debug Plugin In Server Console (Helps You To Debug Issues You Facing)?")]
         [Comment("true = Yes")]

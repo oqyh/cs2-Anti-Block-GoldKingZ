@@ -245,7 +245,7 @@ public class Helper
     private static bool Permission_CheckFlags(CCSPlayerController player, string flags)
     {
         if (player == null || !player.IsValid ||
-            player.Connected != PlayerConnectedState.PlayerConnected ||
+            player.Connected != PlayerConnectedState.Connected ||
             player.IsBot || player.IsHLTV)
             return false;
 
@@ -275,7 +275,7 @@ public class Helper
     private static bool Permission_CheckGroups(CCSPlayerController player, string groups)
     {
         if (player == null || !player.IsValid ||
-            player.Connected != PlayerConnectedState.PlayerConnected ||
+            player.Connected != PlayerConnectedState.Connected ||
             player.IsBot || player.IsHLTV)
             return false;
 
@@ -299,7 +299,7 @@ public class Helper
             .Where(p =>
                 p != null &&
                 p.IsValid &&
-                p.Connected == PlayerConnectedState.PlayerConnected &&
+                p.Connected == PlayerConnectedState.Connected &&
                 (IncludeBots || !p.IsBot) &&
                 (IncludeHLTV || !p.IsHLTV) &&
                 ((IncludeCT && p.TeamNum == (byte)CsTeam.CounterTerrorist) ||
@@ -308,13 +308,12 @@ public class Helper
                 (IncludeSPEC && p.TeamNum == (byte)CsTeam.Spectator)))
             .ToList();
     }
-    
     public static int GetPlayersCount(bool IncludeBots = false, bool IncludeHLTV = false, bool IncludeSPEC = true, bool IncludeCT = true, bool IncludeT = true)
     {
         return Utilities.GetPlayers().Count(p =>
             p != null &&
             p.IsValid &&
-            p.Connected == PlayerConnectedState.PlayerConnected &&
+            p.Connected == PlayerConnectedState.Connected &&
             (IncludeBots || !p.IsBot) &&
             (IncludeHLTV || !p.IsHLTV) &&
             ((IncludeCT && p.TeamNum == (byte)CsTeam.CounterTerrorist) ||
@@ -323,11 +322,11 @@ public class Helper
         );
     }
     
-    public static void ClearVariables(bool clear_data = false)
+    public static void ClearVariables()
     {
         var g_Main = MainPlugin.Instance.g_Main;
 
-        g_Main.Clear(clear_data);
+        g_Main.Clear();
         
     }
     private static CCSGameRules? GetGameRules()
@@ -348,17 +347,14 @@ public class Helper
         return GetGameRules()?.WarmupPeriod ?? false;
     }
 	
-    
     public static void DebugMessage(string message, bool important = false)
     {
         if (!Configs.Instance.EnableDebug && !important) return;
-
-        Console.ForegroundColor = ConsoleColor.Magenta;
+        var color = important ? Con.Red : Con.Magenta;
         string output = $"[Anti Block]: {message}";
-        Console.WriteLine(output);
-
-        Console.ResetColor();
+        Con.WriteLine(color + output);
     }
+
     public static bool ArePlayersOverlapping(CCSPlayerController controller1, CCSPlayerController controller2)
     {
         var pawn1 = controller1?.PlayerPawn?.Value;
@@ -411,7 +407,6 @@ public class Helper
             var initialData = new Globals.PlayerDataClass(
                 player,
                 player.SteamID,
-                Configs.Instance.AntiBodyBlock.AntiBodyBlock_Mode_1_Default ? 1 : 2,
                 null,
                 0,
                 DateTime.MinValue,
@@ -425,95 +420,8 @@ public class Helper
         }
     }
 
-    public static void UpdatePlayerData(CCSPlayerController player, Globals_Static.PersonData data)
-    {
-        if (!player.IsValid()) return;
 
-        var g_Main = MainPlugin.Instance.g_Main;
-        if (!g_Main.Player_Data.TryGetValue(player.Slot, out var handle)) return;
-
-        if (data.AntiBodyBlock < 0)
-        {
-            handle.AntiBodyBlock = data.AntiBodyBlock;
-        }
-    }
-
-    public static void SavePlayersValues()
-    {
-        var g_Main = MainPlugin.Instance.g_Main;
-        var cfg = Configs.Instance;
-
-        if(cfg.AntiBodyBlock.AntiBodyBlock_Mode != 1) return;
-
-        bool saveCookie  = cfg.Cookies_Enable == 2;
-        bool saveMySql   = cfg.MySql_Enable   == 2;
-        bool cleanCookie = cfg.Cookies_Enable  > 0;
-        bool cleanMySql  = cfg.MySql_Enable    > 0;
-
-        var playersToSave = (saveCookie || saveMySql)
-            ? g_Main.Player_Data.Values
-                .Where(d => d != null && d.AntiBodyBlock < 0)
-                .Select(d => new Globals_Static.PersonData
-                {
-                    PlayerSteamID = d.SteamId,
-                    AntiBodyBlock = d.AntiBodyBlock,
-                    DateAndTime   = DateTime.Now
-                })
-                .ToList()
-            : null;
-
-        foreach (var pd in g_Main.Player_Data.Values)
-        {
-            pd.Timer_NoBlock?.Kill();
-            pd.Timer_NoBlock = null;
-        }
-
-        g_Main.Player_Data.Clear();
-
-        if (playersToSave?.Count is null or 0 && !cleanCookie && !cleanMySql) return;
-        
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                var tasks = new List<Task>();
-
-                if (playersToSave?.Count > 0)
-                {
-                    foreach (var data in playersToSave)
-                    {
-                        if (saveCookie)
-                        {
-                            tasks.Add(Cookies.SaveAsync(data));
-                        }
-                        if (saveMySql)
-                        {
-                            tasks.Add(MySqlDataManager.SaveToMySqlAsync(data));
-                        }
-                    }
-                }
-
-                if (cleanCookie)
-                {
-                    tasks.Add(Cookies.RemoveOldEntriesAsync());
-                }
-                if (cleanMySql)
-                {
-                    tasks.Add(MySqlDataManager.DeleteOldPlayersAsync());
-                }
-
-                if (tasks.Count > 0)
-                {
-                    await Task.WhenAll(tasks);
-                }
-            }
-            catch (Exception ex)
-            {
-                DebugMessage($"SavePlayersValues Error: {ex.Message}");
-            }
-        });
-    }
-
+    
     public static void ResetAntiBodyBlock()
     {
         var cfg = Configs.Instance.AntiBodyBlock;
@@ -596,7 +504,7 @@ public class Helper
         foreach (var players in GetPlayersController(false, false, false))
         {
             if (!players.IsValid(true)) continue;
-            _ = MainPlugin.Instance.HandlePlayerConnectionsAsync(players);
+            Helper.CheckPlayerInGlobals(players);
         }
     }
 
@@ -740,30 +648,6 @@ public class Helper
         }
 
         RebuildNadeBounceMaps();
-        LoadData();
-    }
-
-    public static void LoadData()
-    {
-        Cookies.InitializeDatabase();
-        
-        if (Configs.Instance.MySql_Enable > 0)
-        {
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    if (Configs.Instance.MySql_Enable > 0)
-                    {
-                        await MySqlDataManager.CreateTableIfNotExistsAsync();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    DebugMessage($"LoadData Error: {ex.Message}");
-                }
-            });
-        }
     }
 
     public static void RemoveRegisterCommandsAndHooks()
@@ -787,19 +671,5 @@ public class Helper
         RemoveCssCommands(Configs.Instance.AntiBodyBlock.AntiBodyBlock_CommandsInGame.ConvertCommands(), MainPlugin.Instance.Game_UserMessages.CommandsAction_AntiBodyBlock);
 
         CustomGameData.Unload();
-        UnLoadData();
-    }
-
-    public static void UnLoadData()
-    {
-        try
-        {
-            Cookies.Dispose();
-        }
-        catch (Exception ex)
-        {
-            DebugMessage($"UnLoadData Error: {ex.Message}");
-        }
-        
     }
 }

@@ -22,18 +22,16 @@ public class Globals
     {
         public CCSPlayerController Player { get; set; }
         public ulong SteamId { get; set; }
-        public int AntiBodyBlock { get; set; }
         public CounterStrikeSharp.API.Modules.Timers.Timer? Timer_NoBlock { get; set; }
         public int NoBlock_Used { get; set; }
         public DateTime Cooldown { get; set; }
         public DateTime EventPlayerChat { get; set; }
         public DateTime DateAndTime { get; set; }
         
-        public PlayerDataClass(CCSPlayerController Playerr, ulong SteamIdd, int AntiBodyBlockk, CounterStrikeSharp.API.Modules.Timers.Timer? Timer_NoBlockk, int NoBlock_Usedd, DateTime Cooldownn, DateTime EventPlayerChatt, DateTime DateAndTimee)
+        public PlayerDataClass(CCSPlayerController Playerr, ulong SteamIdd, CounterStrikeSharp.API.Modules.Timers.Timer? Timer_NoBlockk, int NoBlock_Usedd, DateTime Cooldownn, DateTime EventPlayerChatt, DateTime DateAndTimee)
         {
             Player = Playerr;
             SteamId = SteamIdd;
-            AntiBodyBlock = AntiBodyBlockk;
             Timer_NoBlock = Timer_NoBlockk;            
             NoBlock_Used = NoBlock_Usedd;            
             Cooldown = Cooldownn;            
@@ -47,15 +45,11 @@ public class Globals
     public Dictionary<string, bool> NadeBounce_Teammates = new(StringComparer.OrdinalIgnoreCase);
     public Dictionary<string, bool> NadeBounce_Enemies  = new(StringComparer.OrdinalIgnoreCase);
 
-    public void Clear(bool clear_data = false)
+    public void Clear()
     {
         AntiBodyBlockTimer?.Kill();
         AntiBodyBlockTimer = null!;
-        
-        if(clear_data)
-        {
-            Helper.KillAntiBodyBlockTimer_All();
-            Player_Data?.Clear();
-        }
+        Helper.KillAntiBodyBlockTimer_All();
+        Player_Data?.Clear();
     }
 }

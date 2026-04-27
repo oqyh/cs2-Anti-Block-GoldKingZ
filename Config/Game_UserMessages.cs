@@ -89,14 +89,15 @@ public class Game_UserMessages
             {
                 Server.NextFrame(() =>
                 {
-                    Helper.ClearVariables(true);
                     Helper.RemoveRegisterCommandsAndHooks();
+                    Helper.ClearVariables();
 
                     Configs.Load(MainPlugin.Instance.ModuleDirectory);
-                    Helper.ReloadPlayersGlobals();
                     Helper.DownloadMissingFiles();
 
                     Helper.RegisterCommandsAndHooks();
+                    
+                    Helper.ReloadPlayersGlobals();
                 });
 
                 Helper.AdvancedPlayerPrintToChat(player, commandInfo, MainPlugin.Instance.Localizer["PrintToChatToPlayer.ReloadPlugin.Successfully"]);
@@ -144,15 +145,19 @@ public class Game_UserMessages
             {
                 if (onetime)
                 {
-                    playerData.AntiBodyBlock = playerData.AntiBodyBlock.ToggleOnOff();
-                    if (playerData.AntiBodyBlock == -1)
+                    if(MainPlugin.Instance._prefs != null && MainPlugin.Instance._prefs.TryGetValue(player.Slot, out var _prefs))
                     {
-                        Helper.AdvancedPlayerPrintToChat(player, commandInfo, MainPlugin.Instance.Localizer["PrintToChatToPlayer.AntiBodyBlock.Mode1.Enabled"]);
+                        _prefs.AntiBodyBlock_Toggle = _prefs.AntiBodyBlock_Toggle.ToggleOnOff();
+                        if (_prefs.AntiBodyBlock_Toggle)
+                        {
+                            Helper.AdvancedPlayerPrintToChat(player, commandInfo, MainPlugin.Instance.Localizer["PrintToChatToPlayer.AntiBodyBlock.Mode1.Enabled"]);
+                        }
+                        else if (!_prefs.AntiBodyBlock_Toggle)
+                        {
+                            Helper.AdvancedPlayerPrintToChat(player, commandInfo, MainPlugin.Instance.Localizer["PrintToChatToPlayer.AntiBodyBlock.Mode1.Disabled"]);
+                        }
                     }
-                    else if (playerData.AntiBodyBlock == -2)
-                    {
-                        Helper.AdvancedPlayerPrintToChat(player, commandInfo, MainPlugin.Instance.Localizer["PrintToChatToPlayer.AntiBodyBlock.Mode1.Disabled"]);
-                    }
+                    
                 }
                 Helper.MuteCommands(um, cfg.AntiBodyBlock_Hide);
             }

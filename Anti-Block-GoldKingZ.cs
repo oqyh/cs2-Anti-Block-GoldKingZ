@@ -18,37 +18,85 @@ using System.Runtime.InteropServices;
 using CounterStrikeSharp.API.Modules.Entities;
 using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
+using ClientPrefs_GoldKingZ.Shared;
+using System.Runtime.CompilerServices;
 
 namespace Anti_Block_GoldKingZ;
+
+public sealed class ClientPrefs
+{
+    public bool AntiBodyBlock_Toggle { get; set; } = Configs.Instance.AntiBodyBlock.AntiBodyBlock_Mode_1_Default;
+}
 
 public class MainPlugin : BasePlugin
 {
     public override string ModuleName => "Anti-BodyBlock Client Side (Support HeadBoost + Vips Flags) + Anti-NadeBlock (Support Specific Nades/Team Bounce)"; 
-    public override string ModuleVersion => "1.0.3";
+    public override string ModuleVersion => "1.0.4";
     public override string ModuleAuthor => "Gold KingZ";
     public override string ModuleDescription => "https://github.com/oqyh";
 	public static MainPlugin Instance { get; set; } = new();
     public readonly Game_UserMessages Game_UserMessages = new();
     public Globals g_Main = new();
+    public IPrefsStore<ClientPrefs>? _prefs;
     public override void Load(bool hotReload)
     {
 		Instance = this;
         Configs.Load(ModuleDirectory);
 
         Helper.RemoveRegisterCommandsAndHooks();
+        Helper.ClearVariables();
+
         Helper.DownloadMissingFiles();
-        
         Helper.RegisterCommandsAndHooks();
 
         if (hotReload)
         {
-            Helper.ClearVariables(true);
-
             Helper.RemoveRegisterCommandsAndHooks();
-            Helper.ReloadPlayersGlobals();
-            Helper.DownloadMissingFiles();
+            Helper.ClearVariables();
 
+            Helper.DownloadMissingFiles();
             Helper.RegisterCommandsAndHooks();
+
+            Helper.ReloadPlayersGlobals();
+        }
+    }
+
+    public override void OnAllPluginsLoaded(bool hotReload)
+    {
+        var api = ClientPrefsApi.Get();
+        if (api == null)
+        {
+            Helper.DebugMessage("Missing ClientPrefs-GoldKingZ API!", true);
+        }else
+        {
+            _prefs = api.CreatePrefs<ClientPrefs>(this, new ClientPrefsOptions
+            {
+                PrefsAPI_CookiesEnable = (PrefsAPI_SaveMode)Configs.Instance.Cookies_Enable,
+                PrefsAPI_CookiesAutoRemoveInactivePlayersOlderThanDays = Configs.Instance.Cookies_AutoRemoveInactivePlayersOlderThanDays,
+
+                PrefsAPI_MySqlEnable = (PrefsAPI_SaveMode)Configs.Instance.MySql_Enable,
+                PrefsAPI_MySqlAutoRemoveInactivePlayersOlderThanDays = Configs.Instance.MySql_AutoRemoveInactivePlayersOlderThanDays,
+                PrefsAPI_MySqlConnectionTimeout = Configs.Instance.MySql_ConnectionTimeout,
+                PrefsAPI_MySqlRetryAttempts = Configs.Instance.MySql_RetryAttempts,
+                PrefsAPI_MySqlRetryDelay = Configs.Instance.MySql_RetryDelay,
+                PrefsAPI_MySqlConfig = new ClientPrefs_GoldKingZ.Shared.MySqlConfig
+                {
+                    MySql_Servers = Configs.Instance.MySql_Config.MySql_Servers
+                        .Select(s => new ClientPrefs_GoldKingZ.Shared.MySqlServer
+                        {
+                            Server   = s.Server,
+                            Port     = s.Port,
+                            Database = s.Database,
+                            Username = s.Username,
+                            Password = s.Password,
+                        }).ToList()
+                },
+            });
+        }
+
+        if (hotReload)
+        {
+            _prefs?.Refresh();
         }
     }
     public void OnMapStart(string Map)
@@ -63,50 +111,9 @@ public class MainPlugin : BasePlugin
         var player = @event.Userid;
         if (!player.IsValid(true)) return HookResult.Continue;
         
-        _ = HandlePlayerConnectionsAsync(player);
+        Helper.CheckPlayerInGlobals(player);
         
         return HookResult.Continue;
-    }
-
-    public async Task HandlePlayerConnectionsAsync(CCSPlayerController player)
-    {
-        try
-        {
-            if (!player.IsValid(true)) return;
-
-            ulong steamId = player.SteamID;
-            int slot = player.Slot;
-
-            if (g_Main.Player_Data.TryGetValue(slot, out var handle))
-            {
-                handle.Player = player;
-                return;
-            }
-
-            await Server.NextFrameAsync(() => Helper.CheckPlayerInGlobals(player));
-
-            if (Configs.Instance.Cookies_Enable > 0)
-            {
-                var cookieData = Cookies.GetPlayerData(steamId);
-                if (cookieData != null)
-                {
-                    await Server.NextFrameAsync(() => Helper.UpdatePlayerData(player, cookieData));
-                }
-            }
-
-            if (Configs.Instance.MySql_Enable > 0)
-            {
-                var mysqlData = await MySqlDataManager.RetrievePersonDataByIdAsync(steamId);
-                if (mysqlData != null)
-                {
-                    await Server.NextFrameAsync(() => Helper.UpdatePlayerData(player, mysqlData));
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Helper.DebugMessage($"HandlePlayerConnectionsAsync error: {ex.Message}");
-        }
     }
 
     public HookResult OnEventRoundStart(EventRoundStart @event, GameEventInfo info)
@@ -213,65 +220,19 @@ public class MainPlugin : BasePlugin
 
         Helper.KillAntiBodyBlockTimer(player);
 
-        if (g_Main.Player_Data.TryGetValue(player.Slot, out var alldata))
+        if (g_Main.Player_Data.ContainsKey(player.Slot))
         {
-            bool AntiBlockChanged      = alldata.AntiBodyBlock         < 0;
-
-            if (AntiBlockChanged)
-            {
-                var snapshot = new Globals_Static.PersonData
-                {
-                    PlayerSteamID     = alldata.SteamId,
-                    AntiBodyBlock = alldata.AntiBodyBlock,
-                    DateAndTime       = DateTime.Now
-                };
-
-                bool saveCookie = Configs.Instance.Cookies_Enable == 1;
-                bool saveMySql  = Configs.Instance.MySql_Enable   == 1;
-
-                if (saveCookie || saveMySql)
-                {
-                    _ = HandlePlayerDisconnectAsync(snapshot, saveCookie, saveMySql);
-                }
-            }
-        }
-        
-        if (!(Configs.Instance.Cookies_Enable == 2 || Configs.Instance.MySql_Enable == 2))
-        {
-            if (g_Main.Player_Data.ContainsKey(player.Slot))
-            {
-                g_Main.Player_Data.Remove(player.Slot);
-            }
+            g_Main.Player_Data.Remove(player.Slot);
         }
 
         return HookResult.Continue;
     }
 
-    public async Task HandlePlayerDisconnectAsync(Globals_Static.PersonData data, bool saveCookie, bool saveMySql)
-    {
-        try
-        {
-            if (saveCookie)
-            {
-                await Cookies.SaveAsync(data);
-            }
-
-            if (saveMySql)
-            {
-                await MySqlDataManager.SaveToMySqlAsync(data);
-            }
-        }
-        catch (Exception ex)
-        {
-            Helper.DebugMessage($"HandlePlayerDisconnectAsync Error: {ex.Message}");
-        }
-    }
 
     public void OnMapEnd()
     {
         try
         {
-            Helper.SavePlayersValues();
             Helper.ClearVariables();
         }
         catch (Exception ex)
@@ -284,8 +245,9 @@ public class MainPlugin : BasePlugin
     {
         try
         {
+            _prefs?.Unload();
             Helper.RemoveRegisterCommandsAndHooks();
-            Helper.ClearVariables(true);
+            Helper.ClearVariables();
         }
         catch (Exception ex)
         {
@@ -297,7 +259,7 @@ public class MainPlugin : BasePlugin
             try
             {
                 Helper.RemoveRegisterCommandsAndHooks();
-                Helper.ClearVariables(true);
+                Helper.ClearVariables();
             }
             catch (Exception ex)
             {
