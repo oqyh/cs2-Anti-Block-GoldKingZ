@@ -1,8 +1,17 @@
-## .:[ Join Our Discord For Support ]:.
+---
+<h2 align="center">.:[ Community | Support ]:.</h2>
+<p align="center">
+  <a href="https://discord.com/invite/U7AuQhu">
+    <img src="https://img.shields.io/badge/Discord-Join-5865F2?style=for-the-badge&logo=discord&logoColor=white" />
+  </a>
+  <a href="https://ko-fi.com/goldkingz">
+    <img src="https://img.shields.io/badge/Ko--fi-Support-FF5E5B?style=for-the-badge&logo=kofi&logoColor=white" />
+  </a>
+</p>
 
-<a href="https://discord.com/invite/U7AuQhu"><img src="https://discord.com/api/guilds/651838917687115806/widget.png?style=banner2"></a>
+---
 
-# [CS2] Anti-Block-GoldKingZ (1.0.3)
+# [CS2] Anti-Block-GoldKingZ (1.0.4)
 
 Anti-BodyBlock Client Side (Support HeadBoost + Vips Flags) + Anti-NadeBlock (Support Specific Nades/Team Bounce)
 
@@ -19,9 +28,7 @@ Anti-BodyBlock Client Side (Support HeadBoost + Vips Flags) + Anti-NadeBlock (Su
 
 [![CounterStrikeSharp](https://img.shields.io/badge/CounterStrikeSharp-83358F)](https://github.com/roflmuffin/CounterStrikeSharp)
 
-[![MySQL](https://img.shields.io/badge/MySQL-4479A1?logo=mysql&logoColor=white)](https://dev.mysql.com/doc/connector-net/en/) [Included in zip]
-
-[![LiteDB](https://img.shields.io/badge/LiteDB-512BD4?logo=dotnet&logoColor=white)](https://www.litedb.org/) [Included in zip]
+[![ClientPrefs-GoldKingZ](https://img.shields.io/badge/ClientPrefs--GoldKingZ-FFD700?logo=github)](https://github.com/oqyh/cs2-ClientPrefs-GoldKingZ/releases) **[Required — Download `ClientPrefs-GoldKingZ.x.x.x.zip`]**
 
 [![JSON](https://img.shields.io/badge/JSON-000000?logo=json)](https://www.newtonsoft.com/json) [Included in zip]
 
@@ -101,7 +108,7 @@ Anti-BodyBlock Client Side (Support HeadBoost + Vips Flags) + Anti-NadeBlock (Su
 | Property | Description | Values | Required |
 |----------|-------------|--------|----------|
 | `Cookies_Enable` | Save player data locally by cookies | `0`-No<br>`1`-On disconnect (Warning Performance)<br>`2`-On map change (Recommended) | - |
-| `Cookies_AutoRemovePlayerOlderThanXDays` | Auto delete inactive players (days) | `0`-Don't delete<br>`1`+ days | `Cookies_Enable=1 or 2` |
+| `Cookies_AutoRemoveInactivePlayersOlderThanDays` | Auto delete inactive players (days) | `0`-Don't delete<br>`1`+ days | `Cookies_Enable=1 or 2` |
 </details>
 
 <details>
@@ -114,7 +121,7 @@ Anti-BodyBlock Client Side (Support HeadBoost + Vips Flags) + Anti-NadeBlock (Su
 | `MySql_RetryAttempts` | Retry attempts on failure | e.g. `3` | `MySql_Enable=1 or 2` |
 | `MySql_RetryDelay` | Delay between retries (seconds) | e.g. `2` | `MySql_Enable=1 or 2` |
 | `MySql_Servers` | MySQL server configurations | Array of server objects | `MySql_Enable=1 or 2` |
-| `MySql_AutoRemovePlayerOlderThanXDays` | Auto delete inactive players (days) | `0`-Don't delete<br>`1`+ days | `MySql_Enable=1 or 2` |
+| `MySql_AutoRemoveInactivePlayersOlderThanDays` | Auto delete inactive players (days) | `0`-Don't delete<br>`1`+ days | `MySql_Enable=1 or 2` |
 </details>
 
 <details>
@@ -123,6 +130,7 @@ Anti-BodyBlock Client Side (Support HeadBoost + Vips Flags) + Anti-NadeBlock (Su
 | Property | Description | Values | Required |
 |----------|-------------|--------|----------|
 | `AutoUpdateSignatures` | Auto update signatures in gamedata.json | `true`/`false` | - |
+| `SetStateChanged` | Method used after `SetStateChanged` | `0` = `Utilities.SetStateChanged` (recommended), `1` = `CollisionRulesChanged` | - |
 | `EnableDebug` | Enable debug plugin in server console | `true`/`false` | - |
 </details>
 
@@ -130,6 +138,14 @@ Anti-BodyBlock Client Side (Support HeadBoost + Vips Flags) + Anti-NadeBlock (Su
 
 <details>
 <summary><b>📋 View Version History</b> (Click to expand 🔽)</summary>
+
+### [1.0.4]
+- Clean Up
+- Rework On Sql + Mysql
+- Added ClientPrefs-GoldKingZ Api To Plugin
+- Added SetStateChanged
+- Changed Cookies_AutoRemovePlayerOlderThanXDays To Cookies_AutoRemoveInactivePlayersOlderThanDays 
+- Changed MySql_AutoRemovePlayerOlderThanXDays To MySql_AutoRemoveInactivePlayersOlderThanDays
 
 ### [1.0.3]
 - Fix Cookies_Enable
