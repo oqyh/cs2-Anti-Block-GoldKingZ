@@ -11,7 +11,7 @@
 
 ---
 
-# [CS2] Anti-Block-GoldKingZ (1.0.4)
+# [CS2] Anti-Block-GoldKingZ (1.0.5)
 
 Anti-BodyBlock Client Side (Support HeadBoost + Vips Flags) + Anti-NadeBlock (Support Specific Nades/Team Bounce)
 
@@ -24,13 +24,13 @@ Anti-BodyBlock Client Side (Support HeadBoost + Vips Flags) + Anti-NadeBlock (Su
 
 ## 📦 Dependencies
 
-[![Metamod:Source](https://img.shields.io/badge/Metamod:Source-2d2d2d?logo=sourceengine)](https://www.sourcemm.net)
+[![Metamod:Source](https://img.shields.io/badge/Metamod:Source-REQUIRED_TO_DOWNLOAD-red?logo=sourceengine&labelColor=2d2d2d)](https://www.sourcemm.net)
 
-[![CounterStrikeSharp](https://img.shields.io/badge/CounterStrikeSharp-83358F)](https://github.com/roflmuffin/CounterStrikeSharp)
+[![CounterStrikeSharp](https://img.shields.io/badge/CounterStrikeSharp-REQUIRED_TO_DOWNLOAD-red?logo=github&labelColor=83358F)](https://github.com/roflmuffin/CounterStrikeSharp)
 
-[![ClientPrefs-GoldKingZ](https://img.shields.io/badge/ClientPrefs--GoldKingZ-FFD700?logo=github)](https://github.com/oqyh/cs2-ClientPrefs-GoldKingZ/releases) **[Required — Download `ClientPrefs-GoldKingZ.x.x.x.zip`]**
+[![ClientPrefs-GoldKingZ](https://img.shields.io/badge/ClientPrefs--GoldKingZ-REQUIRED_TO_DOWNLOAD-red?logo=github&labelColor=FFD700)](https://github.com/oqyh/cs2-ClientPrefs-GoldKingZ/releases)
 
-[![JSON](https://img.shields.io/badge/JSON-000000?logo=json)](https://www.newtonsoft.com/json) [Included in zip]
+[![JSON](https://img.shields.io/badge/JSON-INCLUDED_IN_ZIP-brightgreen?logo=json&labelColor=000000)](https://www.newtonsoft.com/json)
 
 ---
 
@@ -138,6 +138,12 @@ Anti-BodyBlock Client Side (Support HeadBoost + Vips Flags) + Anti-NadeBlock (Su
 
 <details>
 <summary><b>📋 View Version History</b> (Click to expand 🔽)</summary>
+
+### [1.0.5]
+- Upgraded to .NET 10
+- Remove Debug From Release For Optimization
+- Update ClientPrefs-GoldKingZ 1.0.3
+- Added UseOnConVarChangedHook
 
 ### [1.0.4]
 - Clean Up
