@@ -15,7 +15,7 @@ namespace Anti_Block_GoldKingZ.Config
 
     public class Reload_AntiBlock
     {
-        [Comment("Note: Console_Commands Can Be Execute Via Both Console And Chat By (!)")]
+        [Comment("Note: Console_Commands Can Be Execute Via Both Console And Chat By (! or css_)")]
         [Comment("Making Both Console_Commands And Chat_Commands Empty = Disable")]
         [String("Console_Commands", "Chat_Commands")]
         public string Reload_AntiBlock_CommandsInGame { get; set; } = "Console_Commands: css_reloadantiblock,css_reloadab | Chat_Commands: ";
@@ -54,7 +54,7 @@ namespace Anti_Block_GoldKingZ.Config
         public int AntiBodyBlock_Mode { get; set; } = 2;
 
         [Comment("Commands For [AntiBodyBlock_Mode] To Execute Anti-BodyBlock Client Side")]
-        [Comment("Note: Console_Commands Can Be Execute Via Both Console And Chat By (!)")]
+        [Comment("Note: Console_Commands Can Be Execute Via Both Console And Chat By (! or css_)")]
         [Comment("Making Both Console_Commands And Chat_Commands Empty = Disable")]
         [String("Console_Commands", "Chat_Commands")]
         public string AntiBodyBlock_CommandsInGame { get; set; } = "Console_Commands: css_noblock,css_nb | Chat_Commands: ";
@@ -259,7 +259,7 @@ namespace Anti_Block_GoldKingZ.Config
 
         [BreakLine("----------------------------[ ↓ Locally Config ↓ ]----------------------------{nextline}")]
 
-        [Comment("Save Players Data By Cookies Locally (In ../Anti-Block-GoldKingZ/cookies/)?")]
+        [Comment("Save Players Data By Cookies Locally (In ../plugins/ClientPrefs-GoldKingZ/Anti-Block-GoldKingZ/)?")]
         [Comment("0 = No")]
         [Comment("1 = Yes, But Save Data On Players Disconnect (Warning Performance)")]
         [Comment("2 = Yes, But Save Data On Map Change (Recommended)")]
@@ -322,6 +322,11 @@ namespace Anti_Block_GoldKingZ.Config
         "0 = No\n" +
         "1 = By CollisionRulesChanged")]
         public int SetStateChanged { get; set; } = 0;
+
+        [Comment("Use OnConVarChanged Hook On Any ConVar Change")]
+        [Comment("true = Yes")]
+        [Comment("false = No")]
+        public bool UseOnConVarChangedHook { get; set; } = true;
 
         [Comment("Enable Debug Plugin In Server Console (Helps You To Debug Issues You Facing)?")]
         [Comment("true = Yes")]

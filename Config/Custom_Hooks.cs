@@ -13,6 +13,7 @@ public static class CustomHooks
 {
     private static MemoryFunctionWithReturn<nint, nint, bool>? ShouldCollide;
     private static MemoryFunctionWithReturn<nint, bool>?       CBaseCSGrenadeProjectile_OnThrow;
+    private static MemoryFunctionWithReturn<IntPtr, int, IntPtr, IntPtr, IntPtr, byte>? OnConVarChanged;
     private static bool _isHooked = false;
 
     public static void Init(CustomGameData gameData)
@@ -24,12 +25,22 @@ public static class CustomHooks
             if (Configs.Instance.AntiBodyBlock.AntiBodyBlock_Mode != 0)
             {
                 ShouldCollide = gameData.CreateFunction<MemoryFunctionWithReturn<nint, nint, bool>>("ShouldCollide");
+
+                if(Configs.Instance.UseOnConVarChangedHook)
+                {
+                    OnConVarChanged = gameData.CreateFunction<MemoryFunctionWithReturn<IntPtr, int, IntPtr, IntPtr, IntPtr, byte>>("OnConVarChanged");
+                    if (OnConVarChanged != null)
+                    {
+                        OnConVarChanged.Hook(OnConVarChanged_Hook, HookMode.Pre);
+                        Helper.ChangeConvar();
+                    }
+                }
+                
             }
             if (Configs.Instance.AntiNadeBlock_Enable == 4)
             {
                 CBaseCSGrenadeProjectile_OnThrow = gameData.CreateFunction<MemoryFunctionWithReturn<nint, bool>>("CBaseCSGrenadeProjectile_OnThrow");
             }
-
 
             if (ShouldCollide != null)
             {
@@ -64,6 +75,11 @@ public static class CustomHooks
             {
                 CBaseCSGrenadeProjectile_OnThrow.Unhook(OnCBaseCSGrenadeProjectile_OnThrow,  HookMode.Pre);
             }
+
+            if (OnConVarChanged != null)
+            {
+                OnConVarChanged.Unhook(OnConVarChanged_Hook, HookMode.Pre);
+            }
         }
         catch (Exception ex)
         {
@@ -73,8 +89,66 @@ public static class CustomHooks
         {
             ShouldCollide = null;
             CBaseCSGrenadeProjectile_OnThrow = null;
+            OnConVarChanged = null;
             _isHooked      = false;
             Helper.DebugMessage("Hooks Removed");
+        }
+    }
+
+    public static HookResult OnConVarChanged_Hook(DynamicHook hook)
+    {
+        try
+        {
+            var cvarRefPtr = hook.GetParam<IntPtr>(0);
+            var slot       = hook.GetParam<int>(1);
+            var valuePtr   = hook.GetParam<IntPtr>(2);
+
+            if (cvarRefPtr == IntPtr.Zero || valuePtr == IntPtr.Zero)
+                return HookResult.Continue;
+
+            string cvarName = ReadConVarName(cvarRefPtr);
+            if (string.IsNullOrEmpty(cvarName))
+                return HookResult.Continue;
+
+            string newValue = Marshal.PtrToStringAnsi(valuePtr) ?? "";
+
+            if (MainPlugin.Instance.g_Main.HookConVars.TryGetValue(cvarName, out string? expectedValue))
+            {
+                if (!newValue.Equals(expectedValue, StringComparison.OrdinalIgnoreCase))
+                {
+                    Helper.DebugMessage($"[OnConVarChanged_Hook] Slot {slot} attempted to change \"{cvarName}\" from \"{expectedValue}\" to \"{newValue}\", forcing back to \"{expectedValue}\"");
+
+                    Server.NextFrame(() =>
+                    {
+                        Server.ExecuteCommand($"{cvarName} {expectedValue}");
+                    });
+                }
+            }
+
+            return HookResult.Continue;
+        }
+        catch (Exception ex)
+        {
+            Helper.DebugMessage("[OnConVarChanged_Hook] Error in hook callback");
+            Helper.DebugMessage(ex.ToString());
+            return HookResult.Continue;
+        }
+    }
+    private static string ReadConVarName(IntPtr cvarRefPtr)
+    {
+        try
+        {
+            var cvarPtr = Marshal.ReadIntPtr(cvarRefPtr, 0x8);
+            if (cvarPtr == IntPtr.Zero) return "";
+
+            var namePtr = Marshal.ReadIntPtr(cvarPtr, 0x0);
+            if (namePtr == IntPtr.Zero) return "";
+
+            return Marshal.PtrToStringAnsi(namePtr) ?? "";
+        }
+        catch
+        {
+            return "";
         }
     }
 

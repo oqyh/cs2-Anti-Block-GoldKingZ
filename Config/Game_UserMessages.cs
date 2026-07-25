@@ -20,8 +20,6 @@ public class Game_UserMessages
     {
         if (!player.IsValid()) return HookResult.Continue;
 
-        Helper.CheckPlayerInGlobals(player);
-
         if (Configs.Instance.Reload_AntiBlock.Reload_AntiBlock_CommandsInGame.ConvertCommands(true)?.Any(c => message.Equals(c.Trim(), StringComparison.OrdinalIgnoreCase)) == true)
         {
             Handle_ReloadPlugin(player, null!, um!);
@@ -45,15 +43,13 @@ public class Game_UserMessages
     {
         if (!player.IsValid()) return;
 
-        Helper.CheckPlayerInGlobals(player);
         Handle_ReloadPlugin(player, info, null!);
     }
 
     public void CommandsAction_AntiBodyBlock(CCSPlayerController? player, CommandInfo info)
     {
         if (!player.IsValid()) return;
-
-        Helper.CheckPlayerInGlobals(player);
+        
         Handle_AntiBodyBlock(player, info, null!);
     }
 

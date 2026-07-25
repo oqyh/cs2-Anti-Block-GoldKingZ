@@ -326,6 +326,7 @@ public class Helper
     {
         var g_Main = MainPlugin.Instance.g_Main;
 
+        KillAntiBodyBlockTimer_All();
         g_Main.Clear();
         
     }
@@ -454,11 +455,7 @@ public class Helper
     {
         foreach(var players in GetPlayersController(true, false, false, false))
         {
-            if(!players.IsValid(true))continue;
-
-            CheckPlayerInGlobals(players);
-
-            if(!players.IsAlive())continue;
+            if(!players.IsValid(true) || !players.IsAlive())continue;
 
             if(StartAntiBlock)
             {
@@ -481,11 +478,7 @@ public class Helper
 
     public static void StartAntiBlock(CCSPlayerController player)
     {
-        if(!player.IsValid(true))return;
-
-        CheckPlayerInGlobals(player);
-
-        if(!player.IsAlive())return;
+        if(!player.IsValid(true) || !player.IsAlive())return;
 
         player.PlayerPawn.Value.SetCollisionGroup(CollisionGroup.COLLISION_GROUP_DEBRIS);
     }
@@ -494,8 +487,23 @@ public class Helper
     {
         if(Configs.Instance.AntiBodyBlock.AntiBodyBlock_Mode == 0)return;
 
+        if(Configs.Instance.UseOnConVarChangedHook)
+        {
+            MainPlugin.Instance.g_Main.HookConVars.Clear();
+        }
+
         Server.ExecuteCommand("mp_solid_enemies 1");
+        if(Configs.Instance.UseOnConVarChangedHook)
+        {
+            MainPlugin.Instance.g_Main.HookConVars["mp_solid_enemies"] = "1";
+        }
+        
+
         Server.ExecuteCommand("mp_solid_teammates 1");
+        if(Configs.Instance.UseOnConVarChangedHook)
+        {
+            MainPlugin.Instance.g_Main.HookConVars["mp_solid_teammates"] = "1";
+        }
     }
     
 
@@ -504,7 +512,7 @@ public class Helper
         foreach (var players in GetPlayersController(false, false, false))
         {
             if (!players.IsValid(true)) continue;
-            Helper.CheckPlayerInGlobals(players);
+            CheckPlayerInGlobals(players);
         }
     }
 

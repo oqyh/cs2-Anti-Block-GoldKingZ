@@ -44,12 +44,12 @@ public class Globals
     public bool Downloading_FromGithub = false;
     public Dictionary<string, bool> NadeBounce_Teammates = new(StringComparer.OrdinalIgnoreCase);
     public Dictionary<string, bool> NadeBounce_Enemies  = new(StringComparer.OrdinalIgnoreCase);
+    public Dictionary<string, string> HookConVars = new();
 
     public void Clear()
     {
         AntiBodyBlockTimer?.Kill();
         AntiBodyBlockTimer = null!;
-        Helper.KillAntiBodyBlockTimer_All();
         Player_Data?.Clear();
     }
 }

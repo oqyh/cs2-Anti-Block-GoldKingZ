@@ -31,7 +31,7 @@ public sealed class ClientPrefs
 public class MainPlugin : BasePlugin
 {
     public override string ModuleName => "Anti-BodyBlock Client Side (Support HeadBoost + Vips Flags) + Anti-NadeBlock (Support Specific Nades/Team Bounce)"; 
-    public override string ModuleVersion => "1.0.4";
+    public override string ModuleVersion => "1.0.5";
     public override string ModuleAuthor => "Gold KingZ";
     public override string ModuleDescription => "https://github.com/oqyh";
 	public static MainPlugin Instance { get; set; } = new();
@@ -91,6 +91,7 @@ public class MainPlugin : BasePlugin
                             Password = s.Password,
                         }).ToList()
                 },
+                PrefsAPI_DebugEnable = Configs.Instance.EnableDebug
             });
         }
 
@@ -132,9 +133,9 @@ public class MainPlugin : BasePlugin
         g_Main.AntiBodyBlockTimer = null!;
         g_Main.AntiBodyBlockTimer = AddTimer(Configs.Instance.AntiBodyBlock_OnRoundStartDuration, () =>
         {
-            Helper.StartAntiBlock_All(false);
             g_Main.AntiBodyBlockTimer?.Kill();
             g_Main.AntiBodyBlockTimer = null!;
+            Helper.StartAntiBlock_All(false);
             Helper.AdvancedServerPrintToChatAll(Localizer["PrintToChatToAllPlayers.AntiBodyBlock.Disabled"], Configs.Instance.AntiBodyBlock_OnRoundStartDuration);
         }, TimerFlags.STOP_ON_MAPCHANGE);
 
