@@ -1,0 +1,14 @@
+{
+    "PrintToChatToPlayer.ReloadPlugin.Not.Allowed": "{green}[Anti-BodyBlock] {darkred}Nie masz uprawnień",
+    "PrintToChatToPlayer.ReloadPlugin.Successfully": "{green}[Anti-BodyBlock] {grey}Plugin został {lime}pomyślnie przeładowany",
+    "PrintToChatToPlayer.AntiBodyBlock.Not.Allowed": "{green}[Anti-BodyBlock] {darkred}Nie masz uprawnień",
+    "PrintToChatToPlayer.AntiBodyBlock.AlreadyActive": "{green}[Anti-BodyBlock] {grey}Masz już aktywną ochronę Anti-BodyBlock, która pozwala przenikać przez graczy",
+    "PrintToChatToPlayer.AntiBodyBlock.Mode1.Enabled": "{green}[Anti-BodyBlock] {grey}Anti-BodyBlock jest {lime}włączony",
+    "PrintToChatToPlayer.AntiBodyBlock.Mode1.Disabled": "{green}[Anti-BodyBlock] {grey}Anti-BodyBlock jest {darkred}wyłączony",
+    "PrintToChatToPlayer.AntiBodyBlock.Mode2.OnCooldown": "{green}[Anti-BodyBlock] {grey}Musisz poczekać przed ponownym użyciem. Pozostało {yellow}{0} sekund.",
+    "PrintToChatToPlayer.AntiBodyBlock.Mode2.MaxUsesReached": "{green}[Anti-BodyBlock] {darkred}Osiągnięto maksymalny limit użyć: {yellow}{0}",
+    "PrintToChatToPlayer.AntiBodyBlock.Mode2.Enabled": "{green}[Anti-BodyBlock] {grey}Anti-BodyBlock jest {lime}włączony na {purple}{0} {lime}sek.",
+    "PrintToChatToPlayer.AntiBodyBlock.Mode2.Disabled": "{green}[Anti-BodyBlock] {grey}Anti-BodyBlock jest {darkred}wyłączony",
+    "PrintToChatToAllPlayers.AntiBodyBlock.Enabled": "{green}[Anti-BodyBlock] {grey}Anti-BodyBlock został {lime}włączony na {purple}{0} {lime}sek.",
+    "PrintToChatToAllPlayers.AntiBodyBlock.Disabled": "{green}[Anti-BodyBlock] {grey}Anti-BodyBlock został {darkred}wyłączony"
+}

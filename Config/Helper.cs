@@ -347,6 +347,20 @@ public class Helper
     {
         return GetGameRules()?.WarmupPeriod ?? false;
     }
+
+    public static bool IsPistolRound()
+    {
+        var rules = GetGameRules();
+        var halftimeConVar = ConVar.Find("mp_halftime");
+        var maxRoundsConVar = ConVar.Find("mp_maxrounds");
+        if (rules == null || halftimeConVar == null || maxRoundsConVar == null)
+            return false;
+
+        var halfTimeRound = maxRoundsConVar.GetPrimitiveValue<int>() / 2;
+        return rules.TotalRoundsPlayed == 0
+            || (halftimeConVar.GetPrimitiveValue<bool>() && rules.TotalRoundsPlayed == halfTimeRound)
+            || rules.GameRestart;
+    }
 	
     public static void DebugMessage(string message, bool important = false)
     {

@@ -128,18 +128,23 @@ public class MainPlugin : BasePlugin
         Helper.ResetAntiBodyBlock();
 
         Helper.StartAntiBlock_All(true);
-        
+
+        float duration = Configs.Instance.AntiBodyBlock_OnRoundStartDuration;
+        duration += ConVar.Find("mp_freezetime")?.GetPrimitiveValue<int>() ?? 0;
+        if (Helper.IsPistolRound())
+            duration += ConVar.Find("mp_team_intro_time")?.GetPrimitiveValue<float>() ?? 0f;
+
         g_Main.AntiBodyBlockTimer?.Kill();
         g_Main.AntiBodyBlockTimer = null!;
-        g_Main.AntiBodyBlockTimer = AddTimer(Configs.Instance.AntiBodyBlock_OnRoundStartDuration, () =>
+        g_Main.AntiBodyBlockTimer = AddTimer(duration, () =>
         {
             g_Main.AntiBodyBlockTimer?.Kill();
             g_Main.AntiBodyBlockTimer = null!;
             Helper.StartAntiBlock_All(false);
-            Helper.AdvancedServerPrintToChatAll(Localizer["PrintToChatToAllPlayers.AntiBodyBlock.Disabled"], Configs.Instance.AntiBodyBlock_OnRoundStartDuration);
+            Helper.AdvancedServerPrintToChatAll(Localizer["PrintToChatToAllPlayers.AntiBodyBlock.Disabled"], duration);
         }, TimerFlags.STOP_ON_MAPCHANGE);
 
-        Helper.AdvancedServerPrintToChatAll(Localizer["PrintToChatToAllPlayers.AntiBodyBlock.Enabled"], Configs.Instance.AntiBodyBlock_OnRoundStartDuration);
+        Helper.AdvancedServerPrintToChatAll(Localizer["PrintToChatToAllPlayers.AntiBodyBlock.Enabled"], duration);
         return HookResult.Continue;
     }
 
